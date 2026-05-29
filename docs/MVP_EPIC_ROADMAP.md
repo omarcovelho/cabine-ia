@@ -53,6 +53,8 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V0 — Platform slice: booth boots and shows attract
 
+**Detailed spec:** [docs/epics/V0_PLATFORM.md](./epics/V0_PLATFORM.md) · **Branch:** `feature/v0-platform`
+
 **User outcome:** Laptop runs API + kiosk; guest sees idle attract screen driven by server state.
 
 **Vertical deliverables:**
@@ -67,6 +69,16 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 **Demo:** `npm run dev` → kiosk shows “Faça seu retrato cartoon” (or similar) while API reports `attract`.
 
 **Maps to:** Architecture §4; product §6 step 1 (shell).
+
+**Notes:** SQLite and **Começar** button deferred to V1. Tasks are incremental and TDD-driven — see epic spec for full list.
+
+| Phase | Task IDs | Summary |
+|-------|----------|---------|
+| A Setup | V0-00 – V0-03 | Branch, epic spec, roadmap link, `.gitignore` |
+| B API | V0-10 – V0-14 | NestJS, health, booth snapshot, CORS |
+| C Kiosk | V0-20 – V0-26 | Vite/React, polling, PhaseRouter, Attract screen |
+| D Scripts | V0-30 – V0-31 | `npm run dev` orchestration |
+| E Sign-off | V0-40 – V0-41 | Manual demo + DoD |
 
 ---
 
@@ -290,6 +302,7 @@ Use the same checklist every time:
 |----------|---------|
 | [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md) | Product scope and locked MVP decisions |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture and API sketch |
+| [epics/V0_PLATFORM.md](./epics/V0_PLATFORM.md) | V0 task-level implementation spec |
 | THEME_PACK_SPEC.md | Theme/scene authoring (planned) |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
@@ -300,3 +313,4 @@ Use the same checklist every time:
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial vertical epic roadmap (V0–V8) |
+| 2026-05-29 | V0 detailed spec linked; task index added |

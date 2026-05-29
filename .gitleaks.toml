@@ -1,0 +1,5 @@
+title = "cabine-ia gitleaks"
+
+# NestJS scaffold README included a shields.io URL with token=PLACEHOLDER (not a real secret).
+[allowlist]
+paths = ['''api/README.md''']
