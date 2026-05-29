@@ -4,15 +4,15 @@
 **Branch:** `feature/v1-scene-pick`  
 **Last updated:** 2026-05-29
 
-**Sources:** [PROJECT_DEFINITION.md](../PROJECT_DEFINITION.md) §5 Theme/Scene, §6 steps 2–3, §7 pre-event theme, §10 operator theme + scene picker, §16 static examples · [ARCHITECTURE.md](../ARCHITECTURE.md) §5, §8–9 · [MVP_EPIC_ROADMAP.md](../MVP_EPIC_ROADMAP.md) V1
+**Sources:** [PROJECT_DEFINITION.md](../PROJECT_DEFINITION.md) §5 Event/Theme/Scene, §6 steps 2–3, §7 pre-event event + theme, §10 operator event + theme + scene picker, §16 static examples · [ARCHITECTURE.md](../ARCHITECTURE.md) §5, §6, §8–9 · [MVP_EPIC_ROADMAP.md](../MVP_EPIC_ROADMAP.md) V1
 
 ---
 
 ## User outcome
 
-Operator logs in and selects active theme; guest taps **Começar** → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
+Operator logs in, selects or creates an **active event**, then selects **theme**; guest taps **Começar** → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
 
-**Demo:** `npm run dev` → operator sets theme → guest completes scene pick → `curl http://127.0.0.1:3000/booth` shows `phase: "capture_ready"` and `session.sceneId`.
+**Demo:** `npm run dev` → operator creates/switches event → sets theme → guest completes scene pick → `curl http://127.0.0.1:3000/booth` shows `event`, `phase: "capture_ready"`, and `session.sceneId`.
 
 ---
 
@@ -22,16 +22,18 @@ Operator logs in and selects active theme; guest taps **Começar** → sees **3 
 
 - Phases: `attract` → `scene_pick` → `capture_ready` (and back to `scene_pick`)
 - **Operator-only auth:** PIN from env → JWT; guest routes public; `/operator/*` protected (except login)
-- SQLite (Prisma): `Event`, `BoothConfig` (`activeThemeId`), `Session` (`sceneId`, phase)
+- SQLite (Prisma): `Event`, `BoothConfig` (`activeEventId`, `activeThemeId`), `Session` (`eventId`, `sceneId`, phase)
+- Operator event management: list, create, **explicit activate** (one active event; themes independent)
 - Theme loader + two stub packs under `api/themes/`; example images served by API
-- Enriched `GET /booth` snapshot (theme, scenes, session — **never prompts**)
-- Kiosk: Começar, ScenePicker, CaptureReady shells; operator login + theme picker (hidden long-press entry)
+- Enriched `GET /booth` snapshot (event, theme, scenes, session — **never prompts**)
+- Kiosk: Começar, ScenePicker, CaptureReady shells; operator login + event picker + theme picker (hidden long-press entry)
 
 ### Deferred to V2+
 
 - Camera, capture, face detection (V2)
 - Countdown config UI (V5)
-- Pause, retake, skip, archive (V5–V6)
+- Pause, retake, skip (V5)
+- Event rename, delete, download archive (V6)
 - Full remote deployment / CORS hardening (V7)
 - `Tirar foto` action (capture starts in V2 — button is a shell in V1)
 
@@ -46,7 +48,8 @@ Kiosk must **not** advance phases locally — only send commands and read `phase
 | ORM | Prisma |
 | Auth boundary | Operator-only; guest routes public |
 | Auth mechanism | `OPERATOR_PIN` in env → JWT via `POST /operator/login` |
-| Event bootstrap | Auto-seed default event on API boot if DB empty |
+| Event bootstrap | Auto-seed default event + set `activeEventId` on API boot if DB empty; operator-created events require **explicit activate** |
+| Themes vs events | Theme packs global on disk; **not** scoped to events; `POST /operator/theme` independent of event routes |
 | Stub themes | Two packs (`stub-a`, `stub-b`) for operator switch demo |
 | Operator entry | Hidden corner long-press on Attract → login overlay |
 | API bind | `127.0.0.1` in dev; `API_HOST` env documented for future remote deploy |
@@ -72,8 +75,8 @@ Protected operator calls: `Authorization: Bearer <token>`.
 
 | Route | Transition |
 |-------|------------|
-| `GET /booth` | Snapshot: phase, theme, scenes, config, session |
-| `POST /sessions/start` | `attract` → `scene_pick` |
+| `GET /booth` | Snapshot: phase, event, theme, scenes, config, session |
+| `POST /sessions/start` | `attract` → `scene_pick`; creates session under **active event** |
 | `POST /sessions/current/scene` `{ sceneId }` | `scene_pick` → `capture_ready` |
 | `POST /sessions/current/back` | `capture_ready` → `scene_pick` (clear sceneId) |
 
@@ -83,14 +86,20 @@ Invalid transitions → **409**.
 
 | Route | Purpose |
 |-------|---------|
+| `GET /operator/events` | List events (id, name, timestamps) |
+| `POST /operator/events` `{ name }` | Create event (does **not** auto-activate) |
+| `POST /operator/events/:id/activate` | Set active event (409 if guest session in progress; same guard as theme change) |
 | `GET /operator/themes` | List installed theme packs (no prompts) |
 | `POST /operator/theme` `{ themeId }` | Set active theme (only when booth in `attract` or no active session) |
+
+**Activation guard:** Reject event activate and theme change with **409** when booth is not in `attract` or a guest session is in progress beyond idle.
 
 ### Booth snapshot (V1)
 
 ```json
 {
   "phase": "scene_pick",
+  "event": { "id": "…", "name": "Festa da Ana" },
   "theme": { "id": "stub-a", "name": "Festa Cartoon" },
   "scenes": [
     {
@@ -107,6 +116,7 @@ Invalid transitions → **409**.
 
 | Field | Notes |
 |-------|-------|
+| `event` | Active event summary (id + name); always present when DB seeded |
 | `scenes` | Populated from active theme when `phase` is `scene_pick` or later |
 | `session.sceneName` | Set when `phase` is `capture_ready` |
 | prompts | **Never** in any API response |
@@ -122,6 +132,7 @@ cabine-ia/
     src/
       auth/
       operator/
+        events/       # list, create, activate
       sessions/
       themes/
       booth/
@@ -134,7 +145,7 @@ cabine-ia/
       api/            # boothClient, sessionClient, operatorClient
       auth/           # useOperatorAuth
       screens/        # AttractScreen, ScenePickerScreen, CaptureReadyScreen
-      operator/       # OperatorLogin, OperatorThemePicker
+      operator/       # OperatorLogin, OperatorEventPicker, OperatorThemePicker
       routing/PhaseRouter.tsx
   docs/
     epics/V1_SCENE_PICK.md
@@ -168,8 +179,8 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-20 | Prisma scaffold + `Event`, `BoothConfig`, `Session` models | Migration applies in test DB | pending |
-| V1-21 | Boot seed: default event + default `activeThemeId` | Integration: fresh DB has one event | pending |
+| V1-20 | Prisma scaffold + `Event`, `BoothConfig(activeEventId, activeThemeId)`, `Session(eventId, …)` | Migration applies in test DB | pending |
+| V1-21 | Boot seed: default event + set `activeEventId` + default `activeThemeId` | Integration: fresh DB has one active event | pending |
 | V1-22 | `DatabaseModule` / `PrismaService` wired in AppModule | App boots with SQLite under `api/data/` | pending |
 
 ### Phase D — Theme packs
@@ -186,19 +197,22 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
 | V1-40 | `SessionFsmService`: V1 phase transitions | Unit: attract→scene_pick→capture_ready→scene_pick | pending |
-| V1-41 | `POST /sessions/start` | Integration: phase `scene_pick`, session created | pending |
+| V1-41 | `POST /sessions/start` | Integration: phase `scene_pick`, session created with `eventId` | pending |
 | V1-42 | `POST /sessions/current/scene` | Integration: `capture_ready` + sceneId | pending |
 | V1-43 | `POST /sessions/current/back` | Integration: back to `scene_pick` | pending |
 | V1-44 | Reject invalid transitions | Integration: 409 | pending |
 
-### Phase F — Operator theme + booth snapshot
+### Phase F — Operator events, theme + booth snapshot
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
 | V1-50 | `GET /operator/themes` (protected) | Lists packs without prompts | pending |
 | V1-51 | `POST /operator/theme` (protected) | Snapshot reflects new scenes | pending |
-| V1-52 | Refactor `BoothService` → snapshot from DB + themes | Integration: full JSON per phase | pending |
+| V1-52 | Refactor `BoothService` → snapshot from DB + themes (includes `event`) | Integration: full JSON per phase | pending |
 | V1-53 | E2E: login → set theme → guest start → booth scenes | supertest chain | pending |
+| V1-54 | `GET /operator/events` | Integration: lists seeded + created events | pending |
+| V1-55 | `POST /operator/events` | Integration: creates event; does not change active | pending |
+| V1-56 | `POST /operator/events/:id/activate` | Integration: active event updates; 409 when session in progress | pending |
 
 ### Phase G — Kiosk guest flow
 
@@ -216,8 +230,10 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
 | V1-70 | Hidden long-press on Attract opens operator overlay | RTL: gesture opens login | pending |
-| V1-71 | `OperatorLogin` + `OperatorThemePicker` | RTL: login then list themes | pending |
+| V1-71 | `OperatorLogin` + `OperatorEventPicker` + `OperatorThemePicker` | RTL: login then list events and themes | pending |
 | V1-72 | Theme select → `POST /operator/theme`; poll picks up change | Component test | pending |
+| V1-73 | `OperatorEventPicker`: list events, create (name), activate | RTL: create + activate calls client | pending |
+| V1-74 | Event flow in operator overlay: event before theme; PT labels | Component test | pending |
 
 ### Phase I — Sign-off
 
@@ -250,24 +266,24 @@ Optional (future):
 
 1. From repo root: `npm run dev`
 2. Copy `api/.env.example` → `api/.env`; set `OPERATOR_PIN` and `JWT_SECRET`
-3. Open kiosk (`localhost:5173`); long-press hidden corner → operator login → enter PIN → pick theme
+3. Open kiosk (`localhost:5173`); long-press hidden corner → operator login → enter PIN → create or activate event → pick theme
 4. Guest: tap **Começar** → pick a scene card → see **Tirar foto** with scene name
 5. Tap **Voltar** → scene picker again
-6. `curl http://127.0.0.1:3000/booth` → expect `phase` and `session` matching UI
-7. Operator switches theme → guest scene cards update on next poll
+6. `curl http://127.0.0.1:3000/booth` → expect `event`, `phase`, and `session` matching UI
+7. Operator creates new event, activates it, switches theme → guest scene cards update on next poll; new sessions belong to new event
 
 ---
 
 ## Definition of Done
 
 - [ ] Failing test first for each behavior task; full suite passes
-- [ ] Demoable: auth + theme switch + guest scene pick path via `npm run dev`
-- [ ] Traces to product §6 steps 2–3 and §10 operator theme + scene picker
+- [ ] Demoable: auth + event create/activate + theme switch + guest scene pick path via `npm run dev`
+- [ ] Traces to product §6 steps 2–3, §7 pre-event event selection, and §10 operator event + theme + scene picker
 - [ ] API owns phase FSM; kiosk does not duplicate FSM
 - [ ] Prompts never leak to kiosk or public API responses
 - [ ] Operator routes return 401 without valid JWT
 - [ ] No api↔kiosk cross-imports; secrets in api only
-- [ ] PT copy on new guest screens (Começar, Voltar, Tirar foto; scene names from packs)
+- [ ] PT copy on new guest screens (Começar, Voltar, Tirar foto; scene names from packs) and operator event UI (PT labels for list/create/activate)
 
 ---
 
@@ -277,3 +293,4 @@ Optional (future):
 |------|--------|
 | 2026-05-29 | Initial V1 epic spec; Phase A complete |
 | 2026-05-29 | Phase B complete — operator PIN login, JWT guard, kiosk auth hook |
+| 2026-05-29 | Operator event management: list/create/activate, persistence model, API contract, tasks V1-54–56, V1-73–74 |

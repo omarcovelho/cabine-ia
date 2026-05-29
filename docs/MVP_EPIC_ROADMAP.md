@@ -1,7 +1,7 @@
 # Cabine IA — MVP Epic Roadmap (vertical slices)
 
 **Status:** Approved for implementation planning  
-**Last updated:** 2026-05-28  
+**Last updated:** 2026-05-29  
 **Product source of truth:** [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md) (especially §10 and §16)  
 **Architecture source of truth:** [ARCHITECTURE.md](./ARCHITECTURE.md)
 
@@ -82,39 +82,39 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ---
 
-## V1 — Scene selection slice: operator theme, guest picks scene
+## V1 — Scene selection slice: operator event + theme, guest picks scene
 
 **Detailed spec:** [docs/epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) · **Branch:** `feature/v1-scene-pick`
 
-**User outcome:** Operator selects active theme; guest taps Começar → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
+**User outcome:** Operator selects or creates an **active event**, then selects **theme**; guest taps Começar → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
 
 **Vertical deliverables:**
 
 | Layer | Scope |
 |-------|--------|
-| **api/** | Theme pack loader + **one stub theme** under `api/themes/`; phases `attract` → `scene_pick` → `capture_ready`; `POST /sessions/start`, `POST /sessions/current/scene`; `POST /operator/theme`; `GET /booth` includes scene metadata + example image URLs (prompts **never** in response) |
-| **kiosk/** | Attract (Começar), ScenePicker, CaptureReady shells; operator entry to theme list |
-| **persistence** | Event + booth config (active `themeId`) + session (`sceneId`) — first real SQLite migration |
+| **api/** | Theme pack loader + stub themes under `api/themes/`; phases `attract` → `scene_pick` → `capture_ready`; `POST /sessions/start` (session under active event), `POST /sessions/current/scene`; `GET/POST /operator/events`, `POST /operator/events/:id/activate`; `POST /operator/theme`; `GET /booth` includes **event**, scene metadata + example image URLs (prompts **never** in response) |
+| **kiosk/** | Attract (Começar), ScenePicker, CaptureReady shells; operator entry to **event list** (create, activate) and theme list |
+| **persistence** | `Event`, booth config (`activeEventId`, `activeThemeId`), session (`eventId`, `sceneId`) — first real SQLite migration |
 | **docs** | Start `THEME_PACK_SPEC.md` if authoring begins |
 
-**Demo:** Switch theme in operator UI → guest sees different 3 scenes → select scene → capture-ready with correct scene name.
+**Demo:** Create or switch active event → switch theme in operator UI → guest sees different 3 scenes → select scene → capture-ready with correct scene name; `GET /booth` shows active event.
 
-**Maps to:** Product §5 Theme/Scene, §6 steps 2–3, §7 pre-event theme, §16 static examples; §10 operator theme + scene picker.
+**Maps to:** Product §5 Event/Theme/Scene, §6 steps 2–3, §7 pre-event event + theme, §16 static examples; §10 operator event + theme + scene picker.
 
 **Depends on:** V0.
 
-**Notes:** Operator-only auth (PIN → JWT) ships in V1 — guest routes stay public; `/operator/*` protected. Resolves theme-selection access before V5 live controls. Tasks are incremental and TDD-driven — see epic spec for full list.
+**Notes:** Operator-only auth (PIN → JWT) ships in V1 — guest routes stay public; `/operator/*` protected. Events introduced here; themes remain global packs independent of events. Resolves event grouping and theme-selection access before V5 live controls. Tasks are incremental and TDD-driven — see epic spec for full list.
 
 | Phase | Task IDs | Summary |
 |-------|----------|---------|
 | A Setup | V1-00 – V1-02 | Branch, epic spec, roadmap link, env vars |
 | B Auth | V1-10 – V1-13 | Operator PIN login, JWT guard, kiosk auth hook |
-| C Persistence | V1-20 – V1-22 | Prisma, SQLite, event boot seed |
+| C Persistence | V1-20 – V1-22 | Prisma, SQLite, event boot seed + activeEventId |
 | D Themes | V1-30 – V1-33 | Theme pack spec, stub packs, example URLs |
 | E FSM | V1-40 – V1-44 | Session transitions, public session routes |
-| F Booth | V1-50 – V1-53 | Operator theme routes, enriched snapshot, E2E |
+| F Booth | V1-50 – V1-56 | Operator event + theme routes, enriched snapshot, E2E |
 | G Kiosk guest | V1-60 – V1-65 | Começar, ScenePicker, CaptureReady, PhaseRouter |
-| H Kiosk operator | V1-70 – V1-72 | Hidden entry, login, theme picker |
+| H Kiosk operator | V1-70 – V1-74 | Hidden entry, login, event picker, theme picker |
 | I Sign-off | V1-80 – V1-81 | Manual demo + DoD |
 
 ---
@@ -206,21 +206,21 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V6 — Operator archive slice: download all, delete event
 
-**User outcome:** After the event, operator **lists sessions**, downloads **one image** or **ZIP**, then **deletes event** (SQLite + disk).
+**User outcome:** After the event, operator **lists sessions** for a chosen event, downloads **one image** or **ZIP**, then **deletes event** (SQLite + disk).
 
 **Vertical deliverables:**
 
 | Layer | Scope |
 |-------|--------|
-| **api/** | List/download/export.zip/delete endpoints per architecture §9 |
+| **api/** | List/download/export.zip/delete endpoints per architecture §9 (events already exist from V1) |
 | **kiosk/** | Operator downloads view |
 | **persistence** | Deliverable paths already from V3; wire list/delete |
 
-**Demo:** 5 test sessions → download ZIP → delete event → files gone.
+**Demo:** 5 test sessions under one event → download ZIP → delete event → files gone.
 
 **Maps to:** §7 post-event; architecture operator archive; executive summary operator download.
 
-**Depends on:** V3+ (files exist). Can start UI mock after V4.
+**Depends on:** V3+ (files exist). Builds on **Event** entity and operator event list from **V1**; adds archive/delete only. Can start UI mock after V4.
 
 ---
 
@@ -267,7 +267,7 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 | Milestone | Epics | Demo |
 |-----------|--------|------|
 | **Boot** | V0 | Attract on fullscreen |
-| **Choose look** | V1 | Theme + scene picker |
+| **Choose look** | V1 | Event create/activate + theme + scene picker |
 | **Take photo** | V2 | Capture + processing screen |
 | **See magic** | V3 | Cartoon on reveal |
 | **Guest MVP** | V4 | Phone downloads via QR |
@@ -293,6 +293,7 @@ Use the same checklist every time:
 ## MVP+ backlog (not vertical epics)
 
 - Session stats export (§10 should-have)
+- Event rename (§10 should-have)
 - Offline generation queue
 - SSE instead of polling during `processing`
 - Audio countdown (§11)
@@ -332,3 +333,4 @@ Use the same checklist every time:
 | 2026-05-28 | Initial vertical epic roadmap (V0–V8) |
 | 2026-05-29 | V0 detailed spec linked; task index added |
 | 2026-05-29 | V1 detailed spec linked; auth + task index added |
+| 2026-05-29 | Operator event management in V1 scope; V6 archive builds on V1 events |

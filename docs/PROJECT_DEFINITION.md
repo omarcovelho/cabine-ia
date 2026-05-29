@@ -1,7 +1,7 @@
 # Cabine IA — Project Definition
 
 **Status:** Approved for MVP planning  
-**Last updated:** 2026-05-28  
+**Last updated:** 2026-05-29  
 **Document type:** Product definition (not technical implementation)
 
 This document describes what Cabine IA is, who it serves, how it behaves, and what is in scope for the MVP. Technical design and user stories should trace back to sections here—especially [§16 Locked product decisions](#16-locked-product-decisions-mvp).
@@ -32,7 +32,7 @@ Unlike a classic photobooth that prints or shares the raw capture, Cabine IA tre
 
 **One-liner:** *“A photobooth that turns your face into a themed cartoon character—in seconds.”*
 
-**Positioning:** Premium, playful, event-ready experience. The **operator** controls event branding via **theme** selection; **guests** choose their adventure via **scene** (with clear previews). Capture and takeaway stay simple and fast.
+**Positioning:** Premium, playful, event-ready experience. The **operator** manages **events** (grouping guest sessions and archive) and picks **theme** separately from installed packs; **guests** choose their adventure via **scene** (with clear previews). Capture and takeaway stay simple and fast.
 
 **Brand name note:** *Cabine* evokes photobooth (*cabine de fotos*); *IA* signals AI stylization. Working title is fine until marketing locks a public name.
 
@@ -49,7 +49,8 @@ Unlike a classic photobooth that prints or shares the raw capture, Cabine IA tre
 ### Primary: On-site operator
 
 - Sets up laptop + camera before the event
-- Chooses **theme** for the session (theme bundles its scenes, e.g. 3 predefined scenes)
+- Creates or selects the **active event** (groups guest sessions and deliverables for archive)
+- Chooses **theme** from installed packs (theme bundles its scenes, e.g. 3 predefined scenes)—independent of which event is active
 - Configures countdown timings and handles retries during the event
 - Does **not** need to design art or write prompts—only pick from prebuilt theme packs
 
@@ -64,7 +65,9 @@ Unlike a classic photobooth that prints or shares the raw capture, Cabine IA tre
 
 ```mermaid
 flowchart LR
+  Operator --> Event
   Operator --> Theme
+  Event --> SessionGroup
   Theme --> SceneCatalog
   Guest --> ScenePick
   SceneCatalog --> ScenePick
@@ -76,14 +79,26 @@ flowchart LR
   Stylization --> Composition
   Composition --> Deliverable
   Deliverable --> QR
+  SessionGroup --> Deliverable
 ```
+
+### Event
+
+An **operator-managed container** that groups guest **sessions** and their deliverables for a single occasion (e.g. wedding, corporate activation, party).
+
+- Operator can **list**, **create** (name required), and **explicitly activate** one event at a time.
+- New guest sessions attach to the **currently active event** when they start.
+- Deliverables and session records are scoped to the event for post-event download and delete.
+- **Not visible to guests** in MVP—internal operator grouping only.
+- On first boot with an empty database, the system seeds **one default event** and sets it active so the booth is ready without manual setup.
 
 ### Theme
 
 A **visual style system** for cartoon portraits: line weight, color palette, shading style, character proportions, and optional brand accents.
 
-- **Selected by the operator** before or during the event—not by the guest in MVP.
-- One active theme per session.
+- **Installed globally** on the booth (theme packs under server storage)—**not owned by or tied to a specific event**.
+- **Selected by the operator** before or during the run—not by the guest in MVP.
+- One active theme on the booth at a time; the same theme can be used across different events.
 - Examples (illustrative): *Retro comic*, *Soft watercolor mascot*, *Bold flat vector corporate*.
 
 ### Scene
@@ -115,9 +130,16 @@ A short camera interaction: preview, countdown, one shot. Used for face detectio
 
 The final image file guests keep: composed scene + stylized face(s). Format: high-quality PNG or JPEG; **fixed aspect ratio 4:5** for all scenes in MVP. **No watermark or event branding** burned into the file in MVP.
 
-### Session (event run)
+### Session
 
-Operator configuration (active **theme**, countdown settings) + per-guest **scene choice** + ephemeral file retention policy.
+A **single guest journey** through the booth: scene pick → capture → processing → reveal → QR. Each session belongs to the **active event** when the guest taps **Começar**.
+
+- Tracks phase, chosen **scene**, and links to the resulting **deliverable**.
+- Raw captures and intermediates remain ephemeral; the stylized deliverable is kept under the event until the operator deletes it (see §9).
+
+### Booth configuration
+
+Operator-controlled booth settings that apply to the current run: **active event**, **active theme**, **capture countdown**, and **post-finish countdown**. Distinct from a guest session—configuration persists across many guest sessions within the same active event.
 
 ---
 
@@ -143,7 +165,8 @@ UI copy in **Portuguese** for MVP (see §16).
 ### Pre-event setup
 
 - Connect camera (MVP: **single supported webcam path** on laptop).
-- Choose **theme** from installed packs (confirms which **3 scenes** guests will see).
+- **Create or select the active event** (confirm the correct occasion is active before opening to guests).
+- Choose **theme** from installed packs (confirms which **3 scenes** guests will see)—independent of event selection.
 - Set **capture countdown** duration and **post-finish countdown** duration.
 - **No branding/watermark** on deliverable in MVP.
 - Test shot: operator runs one full cycle (each scene once) to validate lighting, examples, and generation quality.
@@ -157,6 +180,7 @@ UI copy in **Portuguese** for MVP (see §16).
 
 ### Post-event
 
+- List sessions and download deliverables **per event** (single image or ZIP), then **delete event** when archive is complete (see §9 retention).
 - Optional session log (counts, errors)—no long-term storage of guest photos unless organizer opts in (see §9).
 
 ---
@@ -192,7 +216,7 @@ UI copy in **Portuguese** for MVP (see §16).
 ### Must have (MVP)
 
 - Fullscreen kiosk UI on **laptop + camera**
-- Operator panel: select **theme** only (theme includes its 3 scenes)
+- Operator panel: **list events**, **create event**, **activate event** (one active at a time; explicit switch), and select **theme** (theme includes its 3 scenes; independent of events)
 - Guest flow: **scene picker (with pre-generated examples)** → **“Tirar foto”** → capture → process → reveal → **QR download**
 - Face detection (**1–4 faces**) with graceful failure and retry UX in Portuguese
 - Stylization consistent with active **theme**; composition into guest-selected **scene**
@@ -205,6 +229,7 @@ UI copy in **Portuguese** for MVP (see §16).
 ### Should have (MVP+)
 
 - Session stats for operator
+- Event rename
 - Offline-tolerant queue if generation API blips
 
 ### Won’t have (MVP)
@@ -299,6 +324,8 @@ UI copy in **Portuguese** for MVP (see §16).
 | **After scene pick** | Explicit **“Tirar foto”** before capture countdown starts |
 | **Capture countdown** | **Configurable** by operator (duration before shutter) |
 | **Post-finish countdown** | **Configurable** by operator (duration on result/QR screen before auto-return to attract) |
+| **Active event** | **One at a time**; operator **explicitly switches** active event; guest sessions bind to active event at **Começar** |
+| **Themes vs events** | **Independent**—theme packs are global; events group sessions only |
 
 ---
 
@@ -306,7 +333,7 @@ UI copy in **Portuguese** for MVP (see §16).
 
 Recommended first real-world test: **personal party** on a laptop with webcam.
 
-**Keep from MVP:** operator theme, guest scene picker, 1–4 faces, 4:5, Portuguese UI, QR + screenshot fallback, configurable countdowns, pre-generated scene examples.
+**Keep from MVP:** operator event selection, operator theme, guest scene picker, 1–4 faces, 4:5, Portuguese UI, QR + screenshot fallback, configurable countdowns, pre-generated scene examples.
 
 **Relax for party night:**
 
@@ -318,6 +345,7 @@ Recommended first real-world test: **personal party** on a laptop with webcam.
 
 **Pre-party checklist:**
 
+- Confirm **active event** matches tonight’s party (create/switch if needed)
 - 1 theme, 3 scenes, each with **example image + prompts** QA’d
 - Dry-run **1, 2, and 4 faces**; verify 4:5 output
 - Set capture and post-finish countdown durations
@@ -346,3 +374,4 @@ Technical architecture and user stories are **out of scope** for this file; they
 | Date | Change |
 |---|---|
 | 2026-05-28 | Initial definition; MVP decisions locked in §16 |
+| 2026-05-29 | Operator event management: Event concept, session/booth split, active event + theme independence in §5–§7, §10, §16 |
