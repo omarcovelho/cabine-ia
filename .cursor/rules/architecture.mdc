@@ -1,0 +1,38 @@
+---
+description: Cabine IA architecture boundaries and repo structure
+alwaysApply: true
+---
+
+# Architecture
+
+**Hierarchy:** PROJECT_DEFINITION (§10, §16) → ARCHITECTURE → current epic. Document deviations explicitly.
+
+## Structure
+
+```
+cabine-ia/
+  api/       NestJS — FSM, jobs, themes, SQLite, R2, secrets
+  kiosk/     React + Vite — guest/operator UI, camera, QR
+  scripts/   Start api + kiosk (orchestration only)
+  docs/      Specs and runbooks
+```
+
+## Principles
+
+- **State:** NestJS is sole owner of booth/session state. Kiosk renders API snapshots and sends commands.
+- **Phases:** Guest screen = API `phase` field. No parallel client state machine.
+- **Module borders:** Keep boundaries explicit within each app (NestJS modules in api/, feature folders in kiosk/). No cross-imports between api/ and kiosk/ — ever.
+- **Boundary:** api ↔ kiosk communicate via HTTP on localhost only. No shared packages, shared types/, or code imports across apps.
+- **Secrets:** API keys, cloud creds, scene prompts — api/ only, never in kiosk bundle.
+- **Themes:** Versioned packs in api/themes/. Kiosk receives metadata via API only.
+- **Delivery:** Guest QR → presigned HTTPS (R2). Raw captures ephemeral in api/data/tmp/.
+- **Stack:** TypeScript in both apps (separate package.json). NestJS + React + Vite + SQLite.
+
+## Responsibilities
+
+| App | Owns |
+|-----|------|
+| api/ | Session FSM, generation, delivery, persistence, operator downloads |
+| kiosk/ | Fullscreen UI, camera, face detection, QR display, API client |
+
+Full details: docs/ARCHITECTURE.md

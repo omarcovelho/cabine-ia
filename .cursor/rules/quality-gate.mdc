@@ -1,0 +1,36 @@
+---
+description: Cabine IA quality gates and strict TDD workflow
+alwaysApply: true
+---
+
+# Quality Gate
+
+## Strict TDD
+
+1. **Red** — write a failing test for the behavior (not implementation detail)
+2. **Green** — minimal code to pass
+3. **Refactor** — clean up; tests stay green
+
+- Mandatory for every behavior change. No production logic without a preceding failing test.
+- **E2E tests:** out of scope unless explicitly requested by the user.
+- **api/:** test FSM transitions, services, controllers (unit + HTTP integration).
+- **kiosk/:** test phase→screen mapping, API client, non-trivial hooks/components.
+- Mock external I/O (generation API, R2, camera). No real cloud calls in tests.
+- Align tests with **vertical epic outcome** — not horizontal layers (see docs/MVP_EPIC_ROADMAP.md).
+
+## Definition of Done
+
+- [ ] Failing test first; full suite passes
+- [ ] Demoable: api + kiosk run together
+- [ ] Traces to product §10/§16 or architecture; deviations documented
+- [ ] API owns phase; kiosk does not duplicate FSM
+- [ ] No api↔kiosk cross-imports; no secrets in kiosk
+- [ ] PT copy on new guest screens
+- [ ] MVP invariants: 1–4 faces, 4:5, no watermark, static examples, prompts server-only
+- [ ] Privacy: no guest raw photo; tmp deleted after job
+
+## Skip testing
+
+Trivial pass-throughs, config-only changes, third-party internals.
+
+Product source: docs/PROJECT_DEFINITION.md
