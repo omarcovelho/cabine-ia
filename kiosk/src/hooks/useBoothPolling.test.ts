@@ -1,15 +1,16 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchBooth } from '../api/boothClient';
+import type { BoothSnapshot } from '../types/booth';
 import { useBoothPolling } from './useBoothPolling';
 
 const mockSnapshot = {
-  phase: 'attract' as const,
+  phase: 'attract',
   theme: null,
   scenes: [],
   config: {},
   session: null,
-};
+} satisfies BoothSnapshot;
 
 vi.mock('../api/boothClient', () => ({
   fetchBooth: vi.fn(),

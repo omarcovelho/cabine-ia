@@ -34,16 +34,13 @@ describe('Cabine API (e2e)', () => {
   });
 
   it('GET /booth returns attract snapshot', () => {
-    return request(app.getHttpServer())
-      .get('/booth')
-      .expect(200)
-      .expect({
-        phase: 'attract',
-        theme: null,
-        scenes: [],
-        config: {},
-        session: null,
-      });
+    return request(app.getHttpServer()).get('/booth').expect(200).expect({
+      phase: 'attract',
+      theme: null,
+      scenes: [],
+      config: {},
+      session: null,
+    });
   });
 
   it('allows CORS from kiosk dev origin', async () => {
