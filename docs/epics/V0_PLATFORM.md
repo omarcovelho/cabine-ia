@@ -1,6 +1,6 @@
 # V0 — Platform slice
 
-**Status:** Ready for implementation  
+**Status:** Complete  
 **Branch:** `feature/v0-platform`  
 **Last updated:** 2026-05-29
 
@@ -130,27 +130,27 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V0-20 | Vite + React + TS scaffold | Vitest runs | pending |
-| V0-21 | Dev proxy `/api` → `127.0.0.1:3000` | Config | pending |
-| V0-22 | `boothClient.ts` — `fetchBooth()` | Parses mock JSON | pending |
-| V0-23 | `useBoothPolling` hook | Mock fetch; state updates | pending |
-| V0-24 | `PhaseRouter` — phase → screen | `attract` → AttractScreen | pending |
-| V0-25 | `AttractScreen` — PT headline, fullscreen | Renders copy | pending |
-| V0-26 | `App.tsx` wire-up + kiosk base styles | Visual demo | pending |
+| V0-20 | Vite + React + TS scaffold | Vitest runs | done |
+| V0-21 | Dev proxy `/api` → `127.0.0.1:3000` | Config | done |
+| V0-22 | `boothClient.ts` — `fetchBooth()` | Parses mock JSON | done |
+| V0-23 | `useBoothPolling` hook | Mock fetch; state updates | done |
+| V0-24 | `PhaseRouter` — phase → screen | `attract` → AttractScreen | done |
+| V0-25 | `AttractScreen` — PT headline, fullscreen | Renders copy | done |
+| V0-26 | `App.tsx` wire-up + kiosk base styles | Visual demo | done |
 
 ### Phase D — Dev orchestration
 
 | ID | Task | Status |
 |----|------|--------|
-| V0-30 | `scripts/dev.mjs` — spawn api + kiosk; SIGINT cleanup | pending |
-| V0-31 | Root `package.json` with `"dev": "node scripts/dev.mjs"` | pending |
+| V0-30 | `scripts/dev.mjs` — spawn api + kiosk; SIGINT cleanup | done |
+| V0-31 | Root `package.json` with `"dev": "node scripts/dev.mjs"` | done |
 
 ### Phase E — Sign-off
 
 | ID | Task | Status |
 |----|------|--------|
-| V0-40 | Manual demo (see below) | pending |
-| V0-41 | Epic DoD checklist complete | pending |
+| V0-40 | Manual demo (see below) | done |
+| V0-41 | Epic DoD checklist complete | done |
 
 ---
 
@@ -179,13 +179,13 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 ## Definition of Done
 
-- [ ] Failing test first for each behavior task; full suite passes
-- [ ] Demoable: `npm run dev` runs api + kiosk together
-- [ ] Traces to product §6 step 1 and architecture §4–5
-- [ ] API owns `phase`; kiosk does not duplicate FSM
-- [ ] No api↔kiosk cross-imports; no secrets in kiosk
-- [ ] PT copy on Attract screen
-- [ ] Scope limited to V0 — no SQLite, themes, or POST routes
+- [x] Failing test first for each behavior task; full suite passes
+- [x] Demoable: `npm run dev` runs api + kiosk together
+- [x] Traces to product §6 step 1 and architecture §4–5
+- [x] API owns `phase`; kiosk does not duplicate FSM
+- [x] No api↔kiosk cross-imports; no secrets in kiosk
+- [x] PT copy on Attract screen
+- [x] Scope limited to V0 — no SQLite, themes, or POST routes
 
 ---
 
@@ -194,3 +194,4 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 | Date | Change |
 |------|--------|
 | 2026-05-29 | Initial V0 epic spec |
+| 2026-05-29 | V0 complete — Phases A–E signed off |
