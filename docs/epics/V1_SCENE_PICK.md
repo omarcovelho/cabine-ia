@@ -159,10 +159,10 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-10 | `AuthModule`: validate PIN from env; sign JWT | Unit: valid/invalid pin | pending |
-| V1-11 | `POST /operator/login` | Integration: 200 + token / 401 | pending |
-| V1-12 | `JwtAuthGuard` on `/operator/*` except login | Integration: protected route 401 without token | pending |
-| V1-13 | Kiosk `operatorClient.login()` + `useOperatorAuth` | Vitest: stores token, attaches header | pending |
+| V1-10 | `AuthModule`: validate PIN from env; sign JWT | Unit: valid/invalid pin | done |
+| V1-11 | `POST /operator/login` | Integration: 200 + token / 401 | done |
+| V1-12 | `JwtAuthGuard` on `/operator/*` except login | Integration: protected route 401 without token | done |
+| V1-13 | Kiosk `operatorClient.login()` + `useOperatorAuth` | Vitest: stores token, attaches header | done |
 
 ### Phase C — Persistence
 
@@ -276,3 +276,4 @@ Optional (future):
 | Date | Change |
 |------|--------|
 | 2026-05-29 | Initial V1 epic spec; Phase A complete |
+| 2026-05-29 | Phase B complete — operator PIN login, JWT guard, kiosk auth hook |

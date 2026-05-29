@@ -5,6 +5,11 @@ import { App } from 'supertest/types';
 import { configureApp } from '../src/app.config';
 import { AppModule } from '../src/app.module';
 
+type LoginResponseBody = {
+  token: string;
+  expiresIn: number;
+};
+
 describe('Cabine API (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -52,5 +57,43 @@ describe('Cabine API (e2e)', () => {
     expect(res.headers['access-control-allow-origin']).toBe(
       'http://localhost:5173',
     );
+  });
+
+  it('POST /operator/login returns token for valid pin', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/operator/login')
+      .send({ pin: '1234' })
+      .expect(200);
+
+    const body = res.body as LoginResponseBody;
+    expect(body.expiresIn).toBe(86400);
+    expect(typeof body.token).toBe('string');
+    expect(body.token.length).toBeGreaterThan(0);
+  });
+
+  it('POST /operator/login returns 401 for invalid pin', () => {
+    return request(app.getHttpServer())
+      .post('/operator/login')
+      .send({ pin: 'wrong' })
+      .expect(401);
+  });
+
+  it('GET /operator/themes returns 401 without token', () => {
+    return request(app.getHttpServer()).get('/operator/themes').expect(401);
+  });
+
+  it('GET /operator/themes returns empty list with valid token', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/operator/login')
+      .send({ pin: '1234' })
+      .expect(200);
+
+    const { token } = login.body as LoginResponseBody;
+
+    return request(app.getHttpServer())
+      .get('/operator/themes')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect({ themes: [] });
   });
 });
