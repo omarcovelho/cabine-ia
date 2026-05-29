@@ -84,6 +84,8 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V1 — Scene selection slice: operator theme, guest picks scene
 
+**Detailed spec:** [docs/epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) · **Branch:** `feature/v1-scene-pick`
+
 **User outcome:** Operator selects active theme; guest taps Começar → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
 
 **Vertical deliverables:**
@@ -100,6 +102,20 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 **Maps to:** Product §5 Theme/Scene, §6 steps 2–3, §7 pre-event theme, §16 static examples; §10 operator theme + scene picker.
 
 **Depends on:** V0.
+
+**Notes:** Operator-only auth (PIN → JWT) ships in V1 — guest routes stay public; `/operator/*` protected. Resolves theme-selection access before V5 live controls. Tasks are incremental and TDD-driven — see epic spec for full list.
+
+| Phase | Task IDs | Summary |
+|-------|----------|---------|
+| A Setup | V1-00 – V1-02 | Branch, epic spec, roadmap link, env vars |
+| B Auth | V1-10 – V1-13 | Operator PIN login, JWT guard, kiosk auth hook |
+| C Persistence | V1-20 – V1-22 | Prisma, SQLite, event boot seed |
+| D Themes | V1-30 – V1-33 | Theme pack spec, stub packs, example URLs |
+| E FSM | V1-40 – V1-44 | Session transitions, public session routes |
+| F Booth | V1-50 – V1-53 | Operator theme routes, enriched snapshot, E2E |
+| G Kiosk guest | V1-60 – V1-65 | Começar, ScenePicker, CaptureReady, PhaseRouter |
+| H Kiosk operator | V1-70 – V1-72 | Hidden entry, login, theme picker |
+| I Sign-off | V1-80 – V1-81 | Manual demo + DoD |
 
 ---
 
@@ -303,7 +319,8 @@ Use the same checklist every time:
 | [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md) | Product scope and locked MVP decisions |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture and API sketch |
 | [epics/V0_PLATFORM.md](./epics/V0_PLATFORM.md) | V0 task-level implementation spec |
-| THEME_PACK_SPEC.md | Theme/scene authoring (planned) |
+| [epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) | V1 task-level implementation spec |
+| THEME_PACK_SPEC.md | Theme/scene authoring (planned; starts in V1) |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
 ---
@@ -314,3 +331,4 @@ Use the same checklist every time:
 |------|--------|
 | 2026-05-28 | Initial vertical epic roadmap (V0–V8) |
 | 2026-05-29 | V0 detailed spec linked; task index added |
+| 2026-05-29 | V1 detailed spec linked; auth + task index added |
