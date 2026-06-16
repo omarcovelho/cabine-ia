@@ -311,6 +311,12 @@ describe('Cabine API (e2e)', () => {
       .expect(404);
   });
 
+  it('GET /themes/:themeId/scenes/:sceneId/example returns 404 for invalid ids', () => {
+    return request(app.getHttpServer())
+      .get('/themes/stub-a/scenes/../etc/example')
+      .expect(404);
+  });
+
   it('POST /sessions/start creates scene_pick session for active event', async () => {
     const boothConfig = await prisma.boothConfig.findUniqueOrThrow({
       where: { id: BOOTH_CONFIG_ID },

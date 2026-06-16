@@ -63,4 +63,13 @@ describe('ThemeService', () => {
   it('throws when example scene is missing', () => {
     expect(() => service.getExampleImagePath('stub-a', 'missing')).toThrow();
   });
+
+  it('rejects path traversal in themeId', () => {
+    expect(() => service.loadPack('../etc')).toThrow();
+    expect(() => service.getExampleImagePath('../etc', 'beach')).toThrow();
+  });
+
+  it('rejects path traversal in sceneId', () => {
+    expect(() => service.getExampleImagePath('stub-a', '../secrets')).toThrow();
+  });
 });

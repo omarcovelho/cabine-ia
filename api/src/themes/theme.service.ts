@@ -2,6 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  assertSafePackId,
+  resolveRelativeFileUnderRoot,
+  resolveUnderRoot,
+} from './theme-path.util';
+import {
   GuestScene,
   SCENE_PROMPT_FILE,
   ThemeManifest,
@@ -32,7 +37,8 @@ export class ThemeService {
   }
 
   loadPack(themeId: string): ThemePack {
-    const rootDir = join(this.themesRoot, themeId);
+    assertSafePackId(themeId, 'themeId');
+    const rootDir = resolveUnderRoot(this.themesRoot, themeId);
     const manifestPath = join(rootDir, 'manifest.json');
 
     if (!existsSync(manifestPath)) {
@@ -75,6 +81,7 @@ export class ThemeService {
   }
 
   getScenePrompt(themeId: string, sceneId: string): string {
+    assertSafePackId(sceneId, 'sceneId');
     const pack = this.loadPack(themeId);
     const scene = pack.scenes.find((entry) => entry.id === sceneId);
 
@@ -86,6 +93,7 @@ export class ThemeService {
   }
 
   getExampleImagePath(themeId: string, sceneId: string): string {
+    assertSafePackId(sceneId, 'sceneId');
     const pack = this.loadPack(themeId);
     const scene = pack.scenes.find((entry) => entry.id === sceneId);
 
@@ -93,7 +101,10 @@ export class ThemeService {
       throw new NotFoundException(`Scene not found: ${themeId}/${sceneId}`);
     }
 
-    const imagePath = join(pack.rootDir, scene.exampleFile);
+    const imagePath = resolveRelativeFileUnderRoot(
+      pack.rootDir,
+      scene.exampleFile,
+    );
     if (!existsSync(imagePath)) {
       throw new NotFoundException(
         `Example image not found: ${themeId}/${sceneId}`,
@@ -104,7 +115,13 @@ export class ThemeService {
   }
 
   private loadScene(rootDir: string, scene: ThemeSceneManifest): ThemeScene {
-    const promptPath = join(rootDir, 'scenes', scene.id, SCENE_PROMPT_FILE);
+    assertSafePackId(scene.id, 'sceneId');
+    const promptPath = resolveUnderRoot(
+      rootDir,
+      'scenes',
+      scene.id,
+      SCENE_PROMPT_FILE,
+    );
     if (!existsSync(promptPath)) {
       throw new Error(
         `Theme scene "${scene.id}" missing prompt file: scenes/${scene.id}/${SCENE_PROMPT_FILE}`,
@@ -137,7 +154,11 @@ export class ThemeService {
     }
 
     for (const scene of manifest.scenes) {
-      const examplePath = join(rootDir, scene.exampleFile);
+      assertSafePackId(scene.id, 'sceneId');
+      const examplePath = resolveRelativeFileUnderRoot(
+        rootDir,
+        scene.exampleFile,
+      );
       if (!existsSync(examplePath)) {
         throw new Error(
           `Theme "${themeId}" missing example file: ${scene.exampleFile}`,
