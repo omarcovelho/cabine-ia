@@ -22,7 +22,7 @@ Operator logs in, selects or creates an **active event**, then selects **theme**
 
 - Phases: `attract` → `scene_pick` → `capture_ready` (and back to `scene_pick`)
 - **Operator-only auth:** PIN from env → JWT; guest routes public; `/operator/*` protected (except login)
-- SQLite (Prisma): `Event`, `BoothConfig` (`activeEventId`, `activeThemeId`), `Session` (`eventId`, `sceneId`, phase)
+- SQLite (Prisma): `Event`, `BoothConfig` (`activeEventId`, `activeThemeId`), `Session` (`eventId`, `sceneId`, `phase`)
 - Operator event management: list, create, **explicit activate** (one active event; themes independent)
 - Theme loader + two stub packs under `api/themes/`; example images served by API
 - Enriched `GET /booth` snapshot (event, theme, scenes, session — **never prompts**)
@@ -53,6 +53,7 @@ Kiosk must **not** advance phases locally — only send commands and read `phase
 | Stub themes | Two packs (`stub-a`, `stub-b`) for operator switch demo |
 | Operator entry | Hidden corner long-press on Attract → login overlay |
 | API bind | `127.0.0.1` in dev; `API_HOST` env documented for future remote deploy |
+| Phase ownership | `GET /booth.phase` = `currentSession?.phase ?? 'attract'`; only `Session` stores guest phase; `BoothConfig` holds operator config only |
 
 ---
 
@@ -90,9 +91,9 @@ Invalid transitions → **409**.
 | `POST /operator/events` `{ name }` | Create event (does **not** auto-activate) |
 | `POST /operator/events/:id/activate` | Set active event (409 if guest session in progress; same guard as theme change) |
 | `GET /operator/themes` | List installed theme packs (no prompts) |
-| `POST /operator/theme` `{ themeId }` | Set active theme (only when booth in `attract` or no active session) |
+| `POST /operator/theme` `{ themeId }` | Set active theme (only when **no current session**) |
 
-**Activation guard:** Reject event activate and theme change with **409** when booth is not in `attract` or a guest session is in progress beyond idle.
+**Activation guard:** Reject event activate and theme change with **409** when a **current guest session** exists.
 
 ### Booth snapshot (V1)
 
@@ -116,6 +117,7 @@ Invalid transitions → **409**.
 
 | Field | Notes |
 |-------|-------|
+| `phase` | Derived: `currentSession.phase` when session exists, else `'attract'` |
 | `event` | Active event summary (id + name); always present when DB seeded |
 | `scenes` | Populated from active theme when `phase` is `scene_pick` or later |
 | `session.sceneName` | Set when `phase` is `capture_ready` |
@@ -179,9 +181,9 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-20 | Prisma scaffold + `Event`, `BoothConfig(activeEventId, activeThemeId)`, `Session(eventId, …)` | Migration applies in test DB | pending |
-| V1-21 | Boot seed: default event + set `activeEventId` + default `activeThemeId` | Integration: fresh DB has one active event | pending |
-| V1-22 | `DatabaseModule` / `PrismaService` wired in AppModule | App boots with SQLite under `api/data/` | pending |
+| V1-20 | Prisma scaffold + `Event`, `BoothConfig`, `Session` models | Migration applies in test DB | done |
+| V1-21 | Boot seed: default event + default `activeThemeId` | Integration: fresh DB has one event | done |
+| V1-22 | `DatabaseModule` / `PrismaService` wired in AppModule | App boots with SQLite under `api/data/` | done |
 
 ### Phase D — Theme packs
 
@@ -208,7 +210,7 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 |----|------|-----------|--------|
 | V1-50 | `GET /operator/themes` (protected) | Lists packs without prompts | pending |
 | V1-51 | `POST /operator/theme` (protected) | Snapshot reflects new scenes | pending |
-| V1-52 | Refactor `BoothService` → snapshot from DB + themes (includes `event`) | Integration: full JSON per phase | pending |
+| V1-52 | Refactor `BoothService` → snapshot from DB + themes; `phase` via `resolveBoothPhase` | Integration: full JSON per phase | pending |
 | V1-53 | E2E: login → set theme → guest start → booth scenes | supertest chain | pending |
 | V1-54 | `GET /operator/events` | Integration: lists seeded + created events | pending |
 | V1-55 | `POST /operator/events` | Integration: creates event; does not change active | pending |
@@ -293,4 +295,6 @@ Optional (future):
 |------|--------|
 | 2026-05-29 | Initial V1 epic spec; Phase A complete |
 | 2026-05-29 | Phase B complete — operator PIN login, JWT guard, kiosk auth hook |
+| 2026-05-29 | Phase C complete — Prisma SQLite, Event/BoothConfig/Session, boot seed |
 | 2026-05-29 | Operator event management: list/create/activate, persistence model, API contract, tasks V1-54–56, V1-73–74 |
+| 2026-05-29 | Phase ownership: drop `BoothConfig.phase`; derive booth phase from session |

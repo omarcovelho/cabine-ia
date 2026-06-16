@@ -145,6 +145,8 @@ stateDiagram-v2
 
 During `processing`, kiosk polls (or SSE — TBD) until phase changes.
 
+**Phase ownership:** `GET /booth` exposes a single `phase` field for the kiosk. It is **not** stored on `BoothConfig`. Idle (`attract`) means no current session; once the guest taps Começar, `Session.phase` drives the screen until the session ends. Implement via `resolveBoothPhase(currentSession)` in the API (`session?.phase ?? 'attract'`). Operator pause (V5) uses a `BoothConfig.paused` flag—not a duplicate phase column.
+
 ---
 
 ## 6. Data and retention
@@ -154,8 +156,8 @@ During `processing`, kiosk polls (or SSE — TBD) until phase changes.
 | Entity | Storage | Notes |
 |--------|---------|-------|
 | **Event** | SQLite | `id`, `name`, timestamps; operator-created; groups sessions and deliverables |
-| **BoothConfig** | SQLite | Singleton row: `activeEventId`, `activeThemeId`, countdown settings |
-| **Session** | SQLite | Guest journey; `eventId` FK to active event at `POST /sessions/start` |
+| **BoothConfig** | SQLite | Operator config: `activeEventId`, `activeThemeId`, countdown settings; optional `paused` (V5). **No guest phase** |
+| **Session** | SQLite | Guest journey state (`phase`, `sceneId`, …); `eventId` FK at `POST /sessions/start` |
 | **Theme pack** | `api/themes/<themeId>/` on disk | **Global**, not under event folders; prompts server-only |
 | **Deliverable** | `api/data/events/{eventId}/deliverables/` | Final cartoon images per session |
 
@@ -198,7 +200,7 @@ All routes on `127.0.0.1` only for MVP. Exact DTOs defined during implementation
 
 **Booth / guest**
 
-- `GET /booth` — snapshot: phase, active **event** (id + name), active theme, scenes for picker, config, current session fields
+- `GET /booth` — snapshot: **phase** (derived from current session or `attract`), active **event** (id + name), active theme, scenes for picker, config, current session fields
 - `POST /sessions/start` — creates session under **active event**
 - `POST /sessions/current/scene`
 - `POST /sessions/current/capture` — body: face crops from kiosk

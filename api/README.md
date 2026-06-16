@@ -6,8 +6,25 @@ NestJS backend for booth state, operator controls, generation, and delivery.
 
 ```bash
 npm install
-cp .env.example .env   # set OPERATOR_PIN and JWT_SECRET (loaded at startup via load-env.ts)
+cp .env.example .env   # set OPERATOR_PIN, JWT_SECRET, DATABASE_URL
 ```
+
+## Database
+
+SQLite database lives under `api/data/` (gitignored).
+
+| Variable | Example | Purpose |
+|----------|---------|---------|
+| `DATABASE_URL` | `file:./data/cabine.db` | Prisma SQLite connection |
+
+After changing env or cloning fresh:
+
+```bash
+npm run prisma:migrate:deploy   # apply migrations
+npm run prisma:migrate          # create new migration in dev
+```
+
+On API boot, if no events exist, a default event + booth config (`activeThemeId: stub-a`) is seeded automatically. Guest screen phase is not stored on booth config — idle is `attract` (no session); in-flow phase lives on `Session`.
 
 ## Run
 

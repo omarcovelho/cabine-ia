@@ -1,0 +1,32 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Event {
+  id          String       @id @default(cuid())
+  name        String       @default("Default Event")
+  createdAt   DateTime     @default(now())
+  boothConfig BoothConfig?
+  sessions    Session[]
+}
+
+model BoothConfig {
+  id            String @id @default(cuid())
+  eventId       String @unique
+  event         Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  activeThemeId String @default("stub-a")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sceneId   String?
+  phase     String
+  createdAt DateTime @default(now())
+}

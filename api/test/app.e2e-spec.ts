@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { configureApp } from '../src/app.config';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/database/prisma.service';
 
 type LoginResponseBody = {
   token: string;
@@ -95,5 +96,15 @@ describe('Cabine API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .expect({ themes: [] });
+  });
+
+  it('seeds default event on boot', async () => {
+    const prisma = app.get(PrismaService);
+    const events = await prisma.event.findMany({
+      include: { boothConfig: true },
+    });
+
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[0]?.boothConfig?.activeThemeId).toBe('stub-a');
   });
 });
