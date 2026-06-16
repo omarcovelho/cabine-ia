@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BOOTH_CONFIG_ID } from '../booth/booth-config.constants';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
@@ -10,19 +11,24 @@ export class BootSeedService implements OnModuleInit {
   }
 
   async seedIfEmpty(): Promise<void> {
-    const eventCount = await this.prisma.event.count();
-    if (eventCount > 0) {
+    const existing = await this.prisma.boothConfig.findUnique({
+      where: { id: BOOTH_CONFIG_ID },
+    });
+    if (existing) {
       return;
     }
 
-    await this.prisma.event.create({
+    const event = await this.prisma.event.create({
       data: {
         name: 'Default Event',
-        boothConfig: {
-          create: {
-            activeThemeId: 'stub-a',
-          },
-        },
+      },
+    });
+
+    await this.prisma.boothConfig.create({
+      data: {
+        id: BOOTH_CONFIG_ID,
+        activeEventId: event.id,
+        activeThemeId: 'stub-a',
       },
     });
   }

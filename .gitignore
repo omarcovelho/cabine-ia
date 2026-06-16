@@ -8,6 +8,7 @@ build/
 
 # Runtime data (api)
 api/data/
+api/prisma/data/
 *.db
 *.db-journal
 *.sqlite

@@ -15,7 +15,7 @@ SQLite database lives under `api/data/` (gitignored).
 
 | Variable | Example | Purpose |
 |----------|---------|---------|
-| `DATABASE_URL` | `file:./data/cabine.db` | Prisma SQLite connection |
+| `DATABASE_URL` | `file:../data/cabine.db` | Prisma SQLite connection (path relative to `prisma/schema.prisma`) |
 
 After changing env or cloning fresh:
 

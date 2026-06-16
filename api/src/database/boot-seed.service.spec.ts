@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BOOTH_CONFIG_ID } from '../booth/booth-config.constants';
 import { BootSeedService } from './boot-seed.service';
 import { PrismaService } from './prisma.service';
 
@@ -24,23 +25,27 @@ describe('BootSeedService', () => {
     await prisma.onModuleDestroy();
   });
 
-  it('seeds default event and booth config on empty database', async () => {
+  it('seeds default event and singleton booth config on empty database', async () => {
     await bootSeed.seedIfEmpty();
 
-    const events = await prisma.event.findMany({
-      include: { boothConfig: true },
+    const boothConfig = await prisma.boothConfig.findUnique({
+      where: { id: BOOTH_CONFIG_ID },
+      include: { activeEvent: true },
     });
 
-    expect(events).toHaveLength(1);
-    expect(events[0]?.name).toBe('Default Event');
-    expect(events[0]?.boothConfig?.activeThemeId).toBe('stub-a');
+    expect(boothConfig).not.toBeNull();
+    expect(boothConfig?.activeThemeId).toBe('stub-a');
+    expect(boothConfig?.activeEvent.name).toBe('Default Event');
+    expect(boothConfig?.activeEventId).toBe(boothConfig?.activeEvent.id);
   });
 
-  it('does not duplicate events when seed runs twice', async () => {
+  it('does not duplicate booth config when seed runs twice', async () => {
     await bootSeed.seedIfEmpty();
     await bootSeed.seedIfEmpty();
 
     const eventCount = await prisma.event.count();
+    const boothConfigCount = await prisma.boothConfig.count();
     expect(eventCount).toBe(1);
+    expect(boothConfigCount).toBe(1);
   });
 });

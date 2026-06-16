@@ -8,17 +8,17 @@ generator client {
 }
 
 model Event {
-  id          String       @id @default(cuid())
-  name        String       @default("Default Event")
-  createdAt   DateTime     @default(now())
-  boothConfig BoothConfig?
-  sessions    Session[]
+  id        String    @id @default(cuid())
+  name      String    @default("Default Event")
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+  activeBoothConfig BoothConfig?
 }
 
 model BoothConfig {
-  id            String @id @default(cuid())
-  eventId       String @unique
-  event         Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id            String @id @default("booth")
+  activeEventId String @unique
+  activeEvent   Event  @relation(fields: [activeEventId], references: [id], onDelete: Restrict)
   activeThemeId String @default("stub-a")
 }
 

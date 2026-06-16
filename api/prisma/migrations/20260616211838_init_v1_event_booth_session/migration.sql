@@ -7,10 +7,10 @@ CREATE TABLE "Event" (
 
 -- CreateTable
 CREATE TABLE "BoothConfig" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "eventId" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'booth',
+    "activeEventId" TEXT NOT NULL,
     "activeThemeId" TEXT NOT NULL DEFAULT 'stub-a',
-    CONSTRAINT "BoothConfig_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "BoothConfig_activeEventId_fkey" FOREIGN KEY ("activeEventId") REFERENCES "Event" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -24,4 +24,4 @@ CREATE TABLE "Session" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BoothConfig_eventId_key" ON "BoothConfig"("eventId");
+CREATE UNIQUE INDEX "BoothConfig_activeEventId_key" ON "BoothConfig"("activeEventId");
