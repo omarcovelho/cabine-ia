@@ -204,6 +204,79 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 | V1-43 | `POST /sessions/current/back` | Integration: back to `scene_pick` | pending |
 | V1-44 | Reject invalid transitions | Integration: 409 | pending |
 
+#### Phase E — Implementation plan
+
+**Goal:** Guest commands persist session state in SQLite. `GET /booth` stays stubbed until Phase F; verify Phase E via session routes + direct DB reads or a minimal debug assertion in integration tests.
+
+**Prerequisite (fold into V1-41):** Resolve **active event** for `POST /sessions/start`. Docs reference `activeEventId`, but the schema today has per-event `BoothConfig` only. Add a singleton `BoothState` row (`activeEventId` FK → `Event`) seeded alongside the default event in `BootSeedService`. Phase F `POST /operator/events/:id/activate` updates this row.
+
+**V1 session phases** (stored on `Session.phase`):
+
+| Phase | Meaning |
+|-------|---------|
+| `scene_pick` | Guest started; no scene chosen yet |
+| `capture_ready` | Scene locked; ready for capture (V2) |
+
+Booth idle = no open session → `resolveBoothPhase` returns `attract` (already implemented).
+
+**FSM transitions** (`SessionFsmService` — pure, no I/O):
+
+| Command | From | To | Side effects |
+|---------|------|-----|--------------|
+| `start` | no session (`attract`) | `scene_pick` | Create `Session` with `eventId`, `sceneId: null` |
+| `selectScene(sceneId)` | `scene_pick` | `capture_ready` | Set `sceneId` (must exist in active theme pack) |
+| `back` | `capture_ready` | `scene_pick` | Clear `sceneId` |
+
+**409 cases:** start when open session exists; `selectScene` when phase ≠ `scene_pick`; `back` when phase ≠ `capture_ready`; duplicate start.
+
+**404 cases:** `selectScene` with unknown `sceneId` for active theme (validate via `ThemeService` + active event’s `BoothConfig.activeThemeId`).
+
+**Current session:** Single open session per booth — latest `Session` where `phase` ∈ `{ scene_pick, capture_ready }`. V1 has no session end yet (V4 adds `done` → attract).
+
+**Target files:**
+
+```
+api/src/
+  booth/
+    booth-state.service.ts       # getActiveEventId(), used by sessions + Phase F
+  sessions/
+    session.types.ts             # SessionPhase union
+    session-fsm.service.ts       # transition guards + next phase
+    session-fsm.service.spec.ts
+    sessions.service.ts          # Prisma + FSM + theme scene validation
+    sessions.service.spec.ts     # optional; e2e may suffice
+    sessions.controller.ts       # POST start, current/scene, current/back
+    sessions.module.ts
+api/test/sessions.e2e-spec.ts    # or extend app.e2e-spec.ts
+```
+
+**TDD order (Red → Green → Refactor):**
+
+1. **V1-40** — Unit tests for `SessionFsmService`: valid transitions; reject wrong phase; `assertCanStart(hasOpenSession)`.
+2. **V1-41** — Migration + seed `BoothState`; integration `POST /sessions/start` → 201/200, body or follow-up DB check: one session, `phase: scene_pick`, `eventId` = active event.
+3. **V1-42** — Integration `POST /sessions/current/scene { sceneId: "beach" }` → session `capture_ready` + `sceneId`; invalid scene → 404.
+4. **V1-43** — Integration `POST /sessions/current/back` → `scene_pick`, `sceneId` null.
+5. **V1-44** — Integration matrix: second start → 409; scene when `capture_ready` → 409; back when `scene_pick` → 409.
+
+**API sketch:**
+
+```http
+POST /sessions/start
+→ 200 { "session": { "id", "phase": "scene_pick", "sceneId": null } }
+→ 409 if session already open
+
+POST /sessions/current/scene
+{ "sceneId": "beach" }
+→ 200 { "session": { "id", "phase": "capture_ready", "sceneId": "beach" } }
+
+POST /sessions/current/back
+→ 200 { "session": { "id", "phase": "scene_pick", "sceneId": null } }
+```
+
+**Out of scope for Phase E:** enriched `GET /booth`, operator routes, kiosk UI, session delete/reset (manual DB wipe OK for dev).
+
+**Phase F handoff:** `BoothService.getSnapshot()` reads `BoothState`, active event + theme, open session, and `ThemeService.toGuestScenes()` when phase ≥ `scene_pick`.
+
 ### Phase F — Operator events, theme + booth snapshot
 
 | ID | Task | TDD focus | Status |
@@ -299,3 +372,4 @@ Optional (future):
 | 2026-05-29 | Operator event management: list/create/activate, persistence model, API contract, tasks V1-54–56, V1-73–74 |
 | 2026-05-29 | Phase ownership: drop `BoothConfig.phase`; derive booth phase from session |
 | 2026-05-29 | Phase D complete — theme pack spec, stub packs, ThemeService, example URLs |
+| 2026-05-29 | Phase E implementation plan — FSM, routes, BoothState prerequisite |
