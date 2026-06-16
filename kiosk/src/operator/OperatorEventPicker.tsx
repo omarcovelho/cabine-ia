@@ -1,20 +1,52 @@
-import type { OperatorEventSummary } from '../api/operatorClient';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  activateEvent,
+  createEvent,
+  listEvents,
+  OperatorAuthError,
+  type OperatorEventSummary,
+} from '../api/operatorClient';
 
 type OperatorEventPickerProps = {
-  events: OperatorEventSummary[];
-  onCreateEvent: (name: string) => Promise<void>;
-  onActivateEvent: (eventId: string) => Promise<void>;
+  token: string;
   onContinue: () => void;
-  error?: string | null;
+  onConfigChanged: () => void;
 };
 
 export function OperatorEventPicker({
-  events,
-  onCreateEvent,
-  onActivateEvent,
+  token,
   onContinue,
-  error,
+  onConfigChanged,
 }: OperatorEventPickerProps) {
+  const [events, setEvents] = useState<OperatorEventSummary[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const reloadEvents = useCallback(async () => {
+    const response = await listEvents(token);
+    setEvents(response.events);
+  }, [token]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listEvents(token)
+      .then((response) => {
+        if (!cancelled) {
+          setEvents(response.events);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Erro ao carregar eventos.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const hasActiveEvent = events.some((event) => event.isActive);
 
   return (
@@ -31,7 +63,21 @@ export function OperatorEventPicker({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => onActivateEvent(event.id)}
+                onClick={() => {
+                  setError(null);
+                  void activateEvent(token, event.id)
+                    .then(async () => {
+                      await reloadEvents();
+                      onConfigChanged();
+                    })
+                    .catch((err: unknown) => {
+                      if (err instanceof OperatorAuthError && err.status === 409) {
+                        setError('Aguarde o convidado terminar a sessão atual.');
+                        return;
+                      }
+                      setError('Erro ao ativar evento.');
+                    });
+                }}
               >
                 Ativar
               </button>
@@ -41,14 +87,23 @@ export function OperatorEventPicker({
       </ul>
       <form
         className="operator-create-form"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault();
           const form = event.currentTarget;
           const name = new FormData(form).get('name');
-          if (typeof name === 'string' && name.trim().length > 0) {
-            await onCreateEvent(name.trim());
-            form.reset();
+          if (typeof name !== 'string' || name.trim().length === 0) {
+            return;
           }
+
+          setError(null);
+          void createEvent(token, name.trim())
+            .then(async () => {
+              form.reset();
+              await reloadEvents();
+            })
+            .catch(() => {
+              setError('Erro ao criar evento.');
+            });
         }}
       >
         <label htmlFor="event-name">Novo evento</label>

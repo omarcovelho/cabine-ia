@@ -50,6 +50,7 @@ function App() {
         }}
       />
       <OperatorOverlay
+        key={isOperatorOpen ? 'open' : 'closed'}
         isOpen={isOperatorOpen}
         token={token}
         isAuthenticated={isAuthenticated}

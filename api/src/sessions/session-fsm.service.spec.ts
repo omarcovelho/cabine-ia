@@ -14,7 +14,9 @@ describe('SessionFsmService', () => {
     });
 
     it('rejects start when a session is already open', () => {
-      expect(() => fsm.assertCanStart(true)).toThrow(InvalidSessionTransitionError);
+      expect(() => fsm.assertCanStart(true)).toThrow(
+        InvalidSessionTransitionError,
+      );
     });
 
     it('returns scene_pick as the phase after start', () => {

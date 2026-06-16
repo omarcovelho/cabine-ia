@@ -24,7 +24,9 @@ export class BoothConfigService {
     return boothConfig;
   }
 
-  toSummary(boothConfig: BoothConfig): Pick<BoothConfig, 'activeEventId' | 'activeThemeId'> {
+  toSummary(
+    boothConfig: BoothConfig,
+  ): Pick<BoothConfig, 'activeEventId' | 'activeThemeId'> {
     return {
       activeEventId: boothConfig.activeEventId,
       activeThemeId: boothConfig.activeThemeId,

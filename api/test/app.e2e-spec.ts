@@ -21,6 +21,31 @@ type SessionResponseBody = {
   };
 };
 
+type BoothResponseBody = {
+  phase: string;
+  event: { id: string; name: string };
+  theme: { id: string; name: string };
+  scenes: Array<{ id: string; exampleUrl: string; name?: string }>;
+  config: Record<string, never>;
+  session: {
+    id: string;
+    sceneId: string | null;
+    sceneName: string | null;
+  } | null;
+};
+
+type ThemesResponseBody = {
+  themes: Array<{ id: string; name: string }>;
+};
+
+type EventsResponseBody = {
+  events: Array<{ id: string; name: string; isActive: boolean }>;
+};
+
+type EventResponseBody = {
+  event: { id: string; name: string; isActive: boolean };
+};
+
 async function loginAsOperator(app: INestApplication<App>): Promise<string> {
   const login = await request(app.getHttpServer())
     .post('/operator/login')
@@ -77,17 +102,18 @@ describe('Cabine API (e2e)', () => {
 
   it('GET /booth returns attract snapshot with event and theme', async () => {
     const res = await request(app.getHttpServer()).get('/booth').expect(200);
+    const body = res.body as BoothResponseBody;
 
-    expect(res.body).toMatchObject({
+    expect(body).toMatchObject({
       phase: 'attract',
       theme: { id: 'stub-a', name: 'Festa Cartoon' },
       scenes: [],
       config: {},
       session: null,
     });
-    expect(res.body.event).toMatchObject({ name: 'Default Event' });
-    expect(res.body.event.id).toEqual(expect.any(String));
-    expect(res.body).not.toHaveProperty('prompt');
+    expect(body.event).toMatchObject({ name: 'Default Event' });
+    expect(body.event.id).toEqual(expect.any(String));
+    expect(body).not.toHaveProperty('prompt');
   });
 
   it('allows CORS from kiosk dev origin', async () => {
@@ -131,14 +157,15 @@ describe('Cabine API (e2e)', () => {
       .get('/operator/themes')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
+    const body = res.body as ThemesResponseBody;
 
-    expect(res.body.themes).toEqual(
+    expect(body.themes).toEqual(
       expect.arrayContaining([
         { id: 'stub-a', name: 'Festa Cartoon' },
         { id: 'stub-b', name: 'Aventura Épica' },
       ]),
     );
-    for (const theme of res.body.themes as Array<Record<string, unknown>>) {
+    for (const theme of body.themes) {
       expect(theme).not.toHaveProperty('prompt');
     }
   });
@@ -153,8 +180,9 @@ describe('Cabine API (e2e)', () => {
       .get('/operator/events')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
+    const body = res.body as EventsResponseBody;
 
-    expect(res.body.events).toEqual(
+    expect(body.events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: boothConfig.activeEventId,
@@ -176,8 +204,9 @@ describe('Cabine API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Festa da Ana' })
       .expect(200);
+    const body = res.body as EventResponseBody;
 
-    expect(res.body.event).toMatchObject({
+    expect(body.event).toMatchObject({
       name: 'Festa da Ana',
       isActive: false,
     });
@@ -196,16 +225,17 @@ describe('Cabine API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Festa da Ana' })
       .expect(200);
+    const createdBody = created.body as EventResponseBody;
 
     await request(app.getHttpServer())
-      .post(`/operator/events/${created.body.event.id}/activate`)
+      .post(`/operator/events/${createdBody.event.id}/activate`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     const boothConfig = await prisma.boothConfig.findUniqueOrThrow({
       where: { id: BOOTH_CONFIG_ID },
     });
-    expect(boothConfig.activeEventId).toBe(created.body.event.id);
+    expect(boothConfig.activeEventId).toBe(createdBody.event.id);
   });
 
   it('POST /operator/events/:id/activate returns 409 when session is open', async () => {
@@ -217,9 +247,10 @@ describe('Cabine API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Festa da Ana' })
       .expect(200);
+    const createdBody = created.body as EventResponseBody;
 
     return request(app.getHttpServer())
-      .post(`/operator/events/${created.body.event.id}/activate`)
+      .post(`/operator/events/${createdBody.event.id}/activate`)
       .set('Authorization', `Bearer ${token}`)
       .expect(409);
   });
@@ -235,7 +266,8 @@ describe('Cabine API (e2e)', () => {
       .expect({ theme: { id: 'stub-b', name: 'Aventura Épica' } });
 
     const booth = await request(app.getHttpServer()).get('/booth').expect(200);
-    expect(booth.body.theme).toEqual({
+    const boothBody = booth.body as BoothResponseBody;
+    expect(boothBody.theme).toEqual({
       id: 'stub-b',
       name: 'Aventura Épica',
     });
@@ -298,10 +330,11 @@ describe('Cabine API (e2e)', () => {
     await request(app.getHttpServer()).post('/sessions/start').expect(200);
 
     const res = await request(app.getHttpServer()).get('/booth').expect(200);
+    const body = res.body as BoothResponseBody;
 
-    expect(res.body.phase).toBe('scene_pick');
-    expect(res.body.scenes).toHaveLength(3);
-    expect(res.body.session).toMatchObject({
+    expect(body.phase).toBe('scene_pick');
+    expect(body.scenes).toHaveLength(3);
+    expect(body.session).toMatchObject({
       sceneId: null,
       sceneName: null,
     });
@@ -328,9 +361,10 @@ describe('Cabine API (e2e)', () => {
       .expect(200);
 
     const res = await request(app.getHttpServer()).get('/booth').expect(200);
+    const body = res.body as BoothResponseBody;
 
-    expect(res.body.phase).toBe('capture_ready');
-    expect(res.body.session).toMatchObject({
+    expect(body.phase).toBe('capture_ready');
+    expect(body.session).toMatchObject({
       sceneId: 'beach',
       sceneName: 'Praia',
     });
@@ -390,7 +424,9 @@ describe('Cabine API (e2e)', () => {
   it('POST /sessions/current/back returns 409 when in scene_pick', async () => {
     await request(app.getHttpServer()).post('/sessions/start').expect(200);
 
-    return request(app.getHttpServer()).post('/sessions/current/back').expect(409);
+    return request(app.getHttpServer())
+      .post('/sessions/current/back')
+      .expect(409);
   });
 
   it('operator theme switch and guest scene pick flow', async () => {
@@ -404,11 +440,14 @@ describe('Cabine API (e2e)', () => {
 
     await request(app.getHttpServer()).post('/sessions/start').expect(200);
 
-    const scenePick = await request(app.getHttpServer()).get('/booth').expect(200);
-    expect(scenePick.body.phase).toBe('scene_pick');
-    expect(scenePick.body.theme.id).toBe('stub-b');
-    expect(scenePick.body.scenes).toHaveLength(3);
-    expect(scenePick.body.scenes[0]).toMatchObject({
+    const scenePick = await request(app.getHttpServer())
+      .get('/booth')
+      .expect(200);
+    const scenePickBody = scenePick.body as BoothResponseBody;
+    expect(scenePickBody.phase).toBe('scene_pick');
+    expect(scenePickBody.theme.id).toBe('stub-b');
+    expect(scenePickBody.scenes).toHaveLength(3);
+    expect(scenePickBody.scenes[0]).toMatchObject({
       id: 'castle',
       exampleUrl: '/themes/stub-b/scenes/castle/example',
     });
@@ -421,8 +460,9 @@ describe('Cabine API (e2e)', () => {
     const captureReady = await request(app.getHttpServer())
       .get('/booth')
       .expect(200);
-    expect(captureReady.body.phase).toBe('capture_ready');
-    expect(captureReady.body.session).toMatchObject({
+    const captureReadyBody = captureReady.body as BoothResponseBody;
+    expect(captureReadyBody.phase).toBe('capture_ready');
+    expect(captureReadyBody.session).toMatchObject({
       sceneId: 'castle',
       sceneName: 'Castelo',
     });

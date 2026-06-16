@@ -1,18 +1,48 @@
-import type { OperatorThemeSummary } from '../api/operatorClient';
+import { useEffect, useState } from 'react';
+import {
+  listThemes,
+  OperatorAuthError,
+  setTheme,
+  type OperatorThemeSummary,
+} from '../api/operatorClient';
 
 type OperatorThemePickerProps = {
-  themes: OperatorThemeSummary[];
+  token: string;
   activeThemeId: string | null;
-  onSelectTheme: (themeId: string) => Promise<void>;
-  error?: string | null;
+  onConfigChanged: () => void;
+  onClose: () => void;
 };
 
 export function OperatorThemePicker({
-  themes,
+  token,
   activeThemeId,
-  onSelectTheme,
-  error,
+  onConfigChanged,
+  onClose,
 }: OperatorThemePickerProps) {
+  const [themes, setThemes] = useState<OperatorThemeSummary[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listThemes(token)
+      .then((response) => {
+        if (!cancelled) {
+          setThemes(response.themes);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Erro ao carregar temas.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   return (
     <div className="operator-panel">
       <h2>Tema</h2>
@@ -27,7 +57,21 @@ export function OperatorThemePicker({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => onSelectTheme(theme.id)}
+                onClick={() => {
+                  setError(null);
+                  void setTheme(token, theme.id)
+                    .then(() => {
+                      onConfigChanged();
+                      onClose();
+                    })
+                    .catch((err: unknown) => {
+                      if (err instanceof OperatorAuthError && err.status === 409) {
+                        setError('Aguarde o convidado terminar a sessão atual.');
+                        return;
+                      }
+                      setError('Erro ao selecionar tema.');
+                    });
+                }}
               >
                 Selecionar
               </button>

@@ -36,7 +36,9 @@ describe('OperatorOverlay', () => {
 
   it('shows event picker after login and loads events', async () => {
     vi.mocked(operatorClient.listEvents).mockResolvedValue({
-      events: [{ id: 'e1', name: 'Festa', isActive: true }],
+      events: [
+        { id: 'e1', name: 'Festa', isActive: true, createdAt: '2026-01-01T00:00:00.000Z' },
+      ],
     });
 
     render(
@@ -60,7 +62,9 @@ describe('OperatorOverlay', () => {
   it('moves to theme picker after Escolher tema', async () => {
     const user = userEvent.setup();
     vi.mocked(operatorClient.listEvents).mockResolvedValue({
-      events: [{ id: 'e1', name: 'Festa', isActive: true }],
+      events: [
+        { id: 'e1', name: 'Festa', isActive: true, createdAt: '2026-01-01T00:00:00.000Z' },
+      ],
     });
     vi.mocked(operatorClient.listThemes).mockResolvedValue({
       themes: [{ id: 'stub-a', name: 'Cartoon' }],
@@ -96,7 +100,9 @@ describe('OperatorOverlay', () => {
     const onConfigChanged = vi.fn();
 
     vi.mocked(operatorClient.listEvents).mockResolvedValue({
-      events: [{ id: 'e1', name: 'Festa', isActive: true }],
+      events: [
+        { id: 'e1', name: 'Festa', isActive: true, createdAt: '2026-01-01T00:00:00.000Z' },
+      ],
     });
     vi.mocked(operatorClient.listThemes).mockResolvedValue({
       themes: [
@@ -104,7 +110,9 @@ describe('OperatorOverlay', () => {
         { id: 'stub-b', name: 'Outro' },
       ],
     });
-    vi.mocked(operatorClient.setTheme).mockResolvedValue(undefined);
+    vi.mocked(operatorClient.setTheme).mockResolvedValue({
+      theme: { id: 'stub-b', name: 'Outro' },
+    });
 
     render(
       <OperatorOverlay
