@@ -94,6 +94,19 @@ export class SessionsService {
     return toSessionDto(updated);
   }
 
+  async getOpenSession(): Promise<Session | null> {
+    return this.findOpenSession();
+  }
+
+  async assertNoOpenSession(): Promise<void> {
+    const openSession = await this.findOpenSession();
+    if (openSession) {
+      throw new ConflictException(
+        'Cannot change booth config while a guest session is in progress',
+      );
+    }
+  }
+
   private async findOpenSession(): Promise<Session | null> {
     const sessions = await this.prisma.session.findMany({
       where: { phase: { in: [...OPEN_SESSION_PHASES] } },

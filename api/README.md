@@ -37,7 +37,7 @@ GET /themes/stub-a/scenes/beach/example
 → 200 image/png
 ```
 
-`GET /operator/themes` and `GET /booth` theme/scene metadata are wired in Phase F.
+`GET /booth` returns live event, theme, scenes, and session state. Operator event/theme routes: `GET/POST /operator/events`, `POST /operator/events/:id/activate`, `GET /operator/themes`, `POST /operator/theme`.
 
 ## Run
 

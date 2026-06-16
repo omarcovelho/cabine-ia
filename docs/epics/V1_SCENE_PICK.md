@@ -232,13 +232,20 @@ Booth idle = no open session → `resolveBoothPhase` returns `attract`.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-50 | `GET /operator/themes` (protected) | Lists packs without prompts | pending |
-| V1-51 | `POST /operator/theme` (protected) | Snapshot reflects new scenes | pending |
-| V1-52 | Refactor `BoothService` → snapshot from DB + themes; `phase` via `resolveBoothPhase` | Integration: full JSON per phase | pending |
-| V1-53 | E2E: login → set theme → guest start → booth scenes | supertest chain | pending |
-| V1-54 | `GET /operator/events` | Integration: lists seeded + created events | pending |
-| V1-55 | `POST /operator/events` | Integration: creates event; does not change active | pending |
-| V1-56 | `POST /operator/events/:id/activate` | Integration: active event updates; 409 when session in progress | pending |
+| V1-50 | `GET /operator/themes` (protected) | Lists packs without prompts | done |
+| V1-51 | `POST /operator/theme` (protected) | Snapshot reflects new scenes | done |
+| V1-52 | Refactor `BoothService` → snapshot from DB + themes; `phase` via `resolveBoothPhase` | Integration: full JSON per phase | done |
+| V1-53 | E2E: login → set theme → guest start → booth scenes | supertest chain | done |
+| V1-54 | `GET /operator/events` | Integration: lists seeded + created events | done |
+| V1-55 | `POST /operator/events` | Integration: creates event; does not change active | done |
+| V1-56 | `POST /operator/events/:id/activate` | Integration: active event updates; 409 when session in progress | done |
+
+#### Phase F — Implementation notes
+
+- **`GET /booth`** returns live snapshot: event, theme, scenes (when in-flow), session with `sceneName` at `capture_ready`.
+- **Activation guard:** `POST /operator/theme` and `POST /operator/events/:id/activate` call `SessionsService.assertNoOpenSession()` → 409.
+- **`GET /operator/events`** includes `isActive` per event (`id === boothConfig.activeEventId`).
+- **Phase G handoff:** kiosk polls `GET /booth`; operator client needs event/theme routes (Phase H).
 
 ### Phase G — Kiosk guest flow
 
@@ -324,3 +331,4 @@ Optional (future):
 | 2026-05-29 | Phase ownership: drop `BoothConfig.phase`; derive booth phase from session |
 | 2026-05-29 | Phase D complete — theme pack spec, stub packs, ThemeService, example URLs |
 | 2026-05-29 | Phase E complete — singleton BoothConfig, SessionFsmService, session routes |
+| 2026-05-29 | Phase F complete — operator events/theme routes, live GET /booth snapshot |

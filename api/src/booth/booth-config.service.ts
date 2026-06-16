@@ -30,4 +30,18 @@ export class BoothConfigService {
       activeThemeId: boothConfig.activeThemeId,
     };
   }
+
+  async setActiveEventId(activeEventId: string): Promise<void> {
+    await this.prisma.boothConfig.update({
+      where: { id: BOOTH_CONFIG_ID },
+      data: { activeEventId },
+    });
+  }
+
+  async setActiveThemeId(activeThemeId: string): Promise<void> {
+    await this.prisma.boothConfig.update({
+      where: { id: BOOTH_CONFIG_ID },
+      data: { activeThemeId },
+    });
+  }
 }
