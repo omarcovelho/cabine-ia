@@ -1,0 +1,25 @@
+{
+  "id": "stub-a",
+  "version": "1.0.0",
+  "name": "Festa Cartoon",
+  "scenes": [
+    {
+      "id": "beach",
+      "name": "Praia",
+      "tagline": null,
+      "exampleFile": "scenes/beach/example.png"
+    },
+    {
+      "id": "city",
+      "name": "Cidade",
+      "tagline": null,
+      "exampleFile": "scenes/city/example.png"
+    },
+    {
+      "id": "forest",
+      "name": "Floresta",
+      "tagline": null,
+      "exampleFile": "scenes/forest/example.png"
+    }
+  ]
+}

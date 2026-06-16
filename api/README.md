@@ -26,6 +26,19 @@ npm run prisma:migrate          # create new migration in dev
 
 On API boot, if no events exist, a default event + booth config (`activeThemeId: stub-a`) is seeded automatically. Guest screen phase is not stored on booth config — idle is `attract` (no session); in-flow phase lives on `Session`.
 
+## Theme packs
+
+Theme packs live under `api/themes/<themeId>/` (see [THEME_PACK_SPEC.md](../docs/THEME_PACK_SPEC.md)).
+
+Example images are served publicly (no auth):
+
+```http
+GET /themes/stub-a/scenes/beach/example
+→ 200 image/png
+```
+
+`GET /operator/themes` and `GET /booth` theme/scene metadata are wired in Phase F.
+
 ## Run
 
 ```bash

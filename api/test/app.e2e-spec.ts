@@ -107,4 +107,19 @@ describe('Cabine API (e2e)', () => {
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0]?.boothConfig?.activeThemeId).toBe('stub-a');
   });
+
+  it('GET /themes/:themeId/scenes/:sceneId/example returns png', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/themes/stub-a/scenes/beach/example')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/image\/png/);
+    expect((res.body as Buffer).length).toBeGreaterThan(0);
+  });
+
+  it('GET /themes/:themeId/scenes/:sceneId/example returns 404 for missing scene', () => {
+    return request(app.getHttpServer())
+      .get('/themes/stub-a/scenes/missing/example')
+      .expect(404);
+  });
 });

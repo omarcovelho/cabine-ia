@@ -190,7 +190,7 @@ During `processing`, kiosk polls (or SSE — TBD) until phase changes.
 
 Versioned on-disk packs under `api/themes/<themeId>/`: manifest, style preset, 3 scenes each with example image, display name (pt-BR), prompts (server-only), composition templates. **Not stored per event**—the same packs are available regardless of which event is active. Kiosk receives scene metadata via API only (names, example image URLs served by Nest).
 
-Details → future [THEME_PACK_SPEC.md](./THEME_PACK_SPEC.md).
+Details → [THEME_PACK_SPEC.md](./THEME_PACK_SPEC.md).
 
 ---
 
@@ -255,7 +255,7 @@ Mapped from product §11: ~30–45s processing perceived wait, retry once on gen
 |----------|---------|
 | [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md) | Product scope and locked MVP decisions |
 | [MVP_EPIC_ROADMAP.md](./MVP_EPIC_ROADMAP.md) | Vertical implementation epics (V0–V8) for task breakdown |
-| THEME_PACK_SPEC.md | Theme/scene authoring (planned) |
+| THEME_PACK_SPEC.md | Theme/scene authoring |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
 ---

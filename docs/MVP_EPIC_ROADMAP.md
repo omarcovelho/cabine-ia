@@ -95,7 +95,7 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 | **api/** | Theme pack loader + stub themes under `api/themes/`; phases `attract` → `scene_pick` → `capture_ready`; `POST /sessions/start` (session under active event), `POST /sessions/current/scene`; `GET/POST /operator/events`, `POST /operator/events/:id/activate`; `POST /operator/theme`; `GET /booth` includes **event**, scene metadata + example image URLs (prompts **never** in response) |
 | **kiosk/** | Attract (Começar), ScenePicker, CaptureReady shells; operator entry to **event list** (create, activate) and theme list |
 | **persistence** | `Event`, booth config (`activeEventId`, `activeThemeId`), session (`eventId`, `sceneId`) — first real SQLite migration |
-| **docs** | Start `THEME_PACK_SPEC.md` if authoring begins |
+| **docs** | [THEME_PACK_SPEC.md](./THEME_PACK_SPEC.md) (authoring); stub packs under `api/themes/` |
 
 **Demo:** Create or switch active event → switch theme in operator UI → guest sees different 3 scenes → select scene → capture-ready with correct scene name; `GET /booth` shows active event.
 
@@ -321,7 +321,7 @@ Use the same checklist every time:
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture and API sketch |
 | [epics/V0_PLATFORM.md](./epics/V0_PLATFORM.md) | V0 task-level implementation spec |
 | [epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) | V1 task-level implementation spec |
-| THEME_PACK_SPEC.md | Theme/scene authoring (planned; starts in V1) |
+| THEME_PACK_SPEC.md | Theme/scene authoring |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
 ---

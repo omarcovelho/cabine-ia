@@ -151,7 +151,7 @@ cabine-ia/
       routing/PhaseRouter.tsx
   docs/
     epics/V1_SCENE_PICK.md
-    THEME_PACK_SPEC.md
+    [THEME_PACK_SPEC.md](../THEME_PACK_SPEC.md)
 ```
 
 ---
@@ -189,10 +189,10 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-30 | Minimal `THEME_PACK_SPEC.md` | Doc review | pending |
-| V1-31 | Two stub packs in `api/themes/stub-a`, `stub-b` | Loader finds both | pending |
-| V1-32 | `ThemeService`: load manifest, guest-safe DTO | Unit: prompts not in DTO | pending |
-| V1-33 | Serve example images at `/themes/.../example` | Integration: GET returns image | pending |
+| V1-30 | Minimal `THEME_PACK_SPEC.md` | Doc review | done |
+| V1-31 | Two stub packs in `api/themes/stub-a`, `stub-b` | Loader finds both | done |
+| V1-32 | `ThemeService`: load manifest, guest-safe DTO | Unit: prompts not in DTO | done |
+| V1-33 | Serve example images at `/themes/.../example` | Integration: GET returns image | done |
 
 ### Phase E — Session FSM + routes
 
@@ -298,3 +298,4 @@ Optional (future):
 | 2026-05-29 | Phase C complete — Prisma SQLite, Event/BoothConfig/Session, boot seed |
 | 2026-05-29 | Operator event management: list/create/activate, persistence model, API contract, tasks V1-54–56, V1-73–74 |
 | 2026-05-29 | Phase ownership: drop `BoothConfig.phase`; derive booth phase from session |
+| 2026-05-29 | Phase D complete — theme pack spec, stub packs, ThemeService, example URLs |

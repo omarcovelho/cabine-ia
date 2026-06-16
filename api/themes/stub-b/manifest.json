@@ -1,0 +1,25 @@
+{
+  "id": "stub-b",
+  "version": "1.0.0",
+  "name": "Aventura Épica",
+  "scenes": [
+    {
+      "id": "castle",
+      "name": "Castelo",
+      "tagline": null,
+      "exampleFile": "scenes/castle/example.png"
+    },
+    {
+      "id": "space",
+      "name": "Espaço",
+      "tagline": null,
+      "exampleFile": "scenes/space/example.png"
+    },
+    {
+      "id": "jungle",
+      "name": "Selva",
+      "tagline": null,
+      "exampleFile": "scenes/jungle/example.png"
+    }
+  ]
+}
