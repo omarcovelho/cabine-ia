@@ -84,7 +84,7 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V1 — Scene selection slice: operator event + theme, guest picks scene
 
-**Detailed spec:** [docs/epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) · **Branch:** `feature/v1-scene-pick`
+**Detailed spec:** [docs/epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) · **Branch:** `feature/v1-scene-pick` · **Status:** Complete (2026-05-29)
 
 **User outcome:** Operator selects or creates an **active event**, then selects **theme**; guest taps Começar → sees **3 scene cards** (example + name) → picks one → lands on **“Tirar foto”** ready state; can go back and change scene.
 

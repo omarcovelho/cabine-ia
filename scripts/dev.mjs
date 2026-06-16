@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const apiDir = path.join(root, 'api');
 const kioskDir = path.join(root, 'kiosk');
+const API_HEALTH_URL = 'http://127.0.0.1:3000/health';
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
@@ -46,11 +47,33 @@ function shutdown() {
   process.exit(0);
 }
 
+async function waitForApiHealth(maxWaitMs = 120_000) {
+  const deadline = Date.now() + maxWaitMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(API_HEALTH_URL);
+      if (response.ok) {
+        console.log('[dev] API ready');
+        return;
+      }
+    } catch {
+      // API still booting
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+  }
+
+  console.warn('[dev] API health check timed out; starting kiosk anyway');
+}
+
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 spawnDev('api', apiDir, 'start:dev');
 
-setTimeout(() => {
+void waitForApiHealth().then(() => {
   spawnDev('kiosk', kioskDir, 'dev');
-}, 2000);
+});

@@ -1,6 +1,6 @@
 # V1 — Scene selection slice
 
-**Status:** In progress  
+**Status:** Complete  
 **Branch:** `feature/v1-scene-pick`  
 **Last updated:** 2026-05-29
 
@@ -251,29 +251,53 @@ Booth idle = no open session → `resolveBoothPhase` returns `attract`.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-60 | Extend `booth.ts` types for V1 | Typecheck | pending |
-| V1-61 | `sessionClient`: start, selectScene, back | Vitest mocks | pending |
-| V1-62 | AttractScreen: **Começar** → start session | RTL: button calls client | pending |
-| V1-63 | `ScenePickerScreen`: 3 cards, tap → selectScene | RTL: renders scenes | pending |
-| V1-64 | `CaptureReadyScreen`: scene name, Voltar, Tirar foto stub | RTL: back calls client | pending |
-| V1-65 | `PhaseRouter`: `scene_pick`, `capture_ready` | Vitest routing | pending |
+| V1-60 | Extend `booth.ts` types for V1 | Typecheck | done |
+| V1-61 | `sessionClient`: start, selectScene, back | Vitest mocks | done |
+| V1-62 | AttractScreen: **Começar** → start session | RTL: button calls client | done |
+| V1-63 | `ScenePickerScreen`: 3 cards, tap → selectScene | RTL: renders scenes | done |
+| V1-64 | `CaptureReadyScreen`: scene name, Voltar, Tirar foto stub | RTL: back calls client | done |
+| V1-65 | `PhaseRouter`: `scene_pick`, `capture_ready` | Vitest routing | done |
+
+#### Phase G — Implementation notes
+
+- **`PhaseRouter`** maps API `phase` to guest screens; no client-side FSM.
+- **`sessionClient`** posts to `/api/sessions/start`, `/current/scene`, `/current/back`; `App` refetches booth after each action.
+- **Capture:** `Tirar foto` is a disabled stub (V2 capture epic).
 
 ### Phase H — Kiosk operator flow
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V1-70 | Hidden long-press on Attract opens operator overlay | RTL: gesture opens login | pending |
-| V1-71 | `OperatorLogin` + `OperatorEventPicker` + `OperatorThemePicker` | RTL: login then list events and themes | pending |
-| V1-72 | Theme select → `POST /operator/theme`; poll picks up change | Component test | pending |
-| V1-73 | `OperatorEventPicker`: list events, create (name), activate | RTL: create + activate calls client | pending |
-| V1-74 | Event flow in operator overlay: event before theme; PT labels | Component test | pending |
+| V1-70 | Hidden long-press on Attract opens operator overlay | RTL: gesture opens login | done |
+| V1-71 | `OperatorLogin` + `OperatorEventPicker` + `OperatorThemePicker` | RTL: login then list events and themes | done |
+| V1-72 | Theme select → `POST /operator/theme`; poll picks up change | Component test | done |
+| V1-73 | `OperatorEventPicker`: list events, create (name), activate | RTL: create + activate calls client | done |
+| V1-74 | Event flow in operator overlay: event before theme; PT labels | Component test | done |
+
+#### Phase H — Implementation notes
+
+- **Entry:** 2s long-press on hidden bottom-left zone on Attract (no visible chrome).
+- **Flow:** login → event list/create/activate → theme picker → `POST /operator/theme` → close overlay + refetch booth.
+- **409 handling:** theme/event changes blocked while guest session open — PT error shown.
 
 ### Phase I — Sign-off
 
 | ID | Task | Status |
 |----|------|--------|
-| V1-80 | Manual demo script (see below) | pending |
-| V1-81 | Epic DoD checklist complete | pending |
+| V1-80 | Manual demo script (see below) | done |
+| V1-81 | Epic DoD checklist complete | done |
+
+#### Phase I — Sign-off notes
+
+**Automated verification (2026-05-29):**
+
+| Suite | Result |
+|-------|--------|
+| `api/` unit (`jest`) | 29 passed |
+| `api/` e2e (`test:e2e`) | 28 passed |
+| `kiosk/` (`vitest`) | 34 passed |
+
+**Manual demo script:** Steps 1–7 below exercised during development; guest + operator flows covered by e2e chain (V1-53) and kiosk RTL tests. **Known V1 gap:** no guest session cancel — use `DELETE FROM Session WHERE phase IN ('scene_pick','capture_ready')` in dev to return to attract (V4 adds post-finish reset).
 
 ---
 
@@ -309,14 +333,14 @@ Optional (future):
 
 ## Definition of Done
 
-- [ ] Failing test first for each behavior task; full suite passes
-- [ ] Demoable: auth + event create/activate + theme switch + guest scene pick path via `npm run dev`
-- [ ] Traces to product §6 steps 2–3, §7 pre-event event selection, and §10 operator event + theme + scene picker
-- [ ] API owns phase FSM; kiosk does not duplicate FSM
-- [ ] Prompts never leak to kiosk or public API responses
-- [ ] Operator routes return 401 without valid JWT
-- [ ] No api↔kiosk cross-imports; secrets in api only
-- [ ] PT copy on new guest screens (Começar, Voltar, Tirar foto; scene names from packs) and operator event UI (PT labels for list/create/activate)
+- [x] Failing test first for each behavior task; full suite passes
+- [x] Demoable: auth + event create/activate + theme switch + guest scene pick path via `npm run dev`
+- [x] Traces to product §6 steps 2–3, §7 pre-event event selection, and §10 operator event + theme + scene picker
+- [x] API owns phase FSM; kiosk does not duplicate FSM
+- [x] Prompts never leak to kiosk or public API responses
+- [x] Operator routes return 401 without valid JWT
+- [x] No api↔kiosk cross-imports; secrets in api only
+- [x] PT copy on new guest screens (Começar, Voltar, Tirar foto; scene names from packs) and operator event UI (PT labels for list/create/activate)
 
 ---
 
@@ -332,3 +356,6 @@ Optional (future):
 | 2026-05-29 | Phase D complete — theme pack spec, stub packs, ThemeService, example URLs |
 | 2026-05-29 | Phase E complete — singleton BoothConfig, SessionFsmService, session routes |
 | 2026-05-29 | Phase F complete — operator events/theme routes, live GET /booth snapshot |
+| 2026-05-29 | Phase G complete — kiosk guest flow (Começar, scene pick, capture ready) |
+| 2026-05-29 | Phase H complete — kiosk operator overlay (event + theme pickers) |
+| 2026-05-29 | Phase I sign-off — V1 epic complete (91 tests green) |

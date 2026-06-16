@@ -1,13 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchBooth } from './boothClient';
-
-const mockSnapshot = {
-  phase: 'attract' as const,
-  theme: null,
-  scenes: [],
-  config: {},
-  session: null,
-};
+import { mockBoothSnapshot } from '../test/fixtures/boothSnapshots';
 
 describe('fetchBooth', () => {
   afterEach(() => {
@@ -19,12 +12,13 @@ describe('fetchBooth', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockSnapshot),
+        json: () => Promise.resolve(mockBoothSnapshot),
       }),
     );
 
     const snapshot = await fetchBooth();
     expect(snapshot.phase).toBe('attract');
+    expect(snapshot.theme.id).toBe('stub-a');
   });
 
   it('throws when response is not ok', async () => {
@@ -36,6 +30,6 @@ describe('fetchBooth', () => {
       }),
     );
 
-    await expect(fetchBooth()).rejects.toThrow('Failed to fetch booth');
+    await expect(fetchBooth()).rejects.toThrow('Failed to fetch booth: 500');
   });
 });

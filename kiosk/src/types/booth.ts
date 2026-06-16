@@ -1,9 +1,33 @@
-export type BoothPhase = 'attract';
+export type BoothPhase = 'attract' | 'scene_pick' | 'capture_ready';
+
+export interface GuestScene {
+  id: string;
+  name: string;
+  tagline: string | null;
+  exampleUrl: string;
+}
+
+export interface BoothEventSummary {
+  id: string;
+  name: string;
+}
+
+export interface BoothThemeSummary {
+  id: string;
+  name: string;
+}
+
+export interface BoothSessionSnapshot {
+  id: string;
+  sceneId: string | null;
+  sceneName: string | null;
+}
 
 export interface BoothSnapshot {
   phase: BoothPhase;
-  theme: null;
-  scenes: [];
+  event: BoothEventSummary;
+  theme: BoothThemeSummary;
+  scenes: GuestScene[];
   config: Record<string, never>;
-  session: null;
+  session: BoothSessionSnapshot | null;
 }
