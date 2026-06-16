@@ -21,6 +21,9 @@ jobs:
           cache: npm
           cache-dependency-path: api/package-lock.json
       - run: npm ci
+      - run: npm run prisma:migrate:deploy
+        env:
+          DATABASE_URL: file:../data/test.db
       - run: npm run lint:ci
       - run: npm test
       - run: npm run test:e2e

@@ -1,7 +1,7 @@
 # Cabine IA — MVP Architecture
 
 **Status:** Draft for implementation planning  
-**Last updated:** 2026-05-28  
+**Last updated:** 2026-05-29  
 **Product source of truth:** [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md)
 
 This document describes *how* the MVP is built at a high level. User stories, epics, and tasks should trace back here, to the product definition (especially §10 and §16), and to [MVP_EPIC_ROADMAP.md](./MVP_EPIC_ROADMAP.md) for vertical implementation epics.
@@ -10,7 +10,7 @@ This document describes *how* the MVP is built at a high level. User stories, ep
 
 ## 1. Purpose
 
-Cabine IA is a laptop-based AI photobooth: operator picks a **theme**, guest picks a **scene**, system captures faces, generates a cartoon **deliverable**, and guest receives it via **QR code**. Operator can **download all generated images** after the event.
+Cabine IA is a laptop-based AI photobooth: operator manages **events** (grouping guest sessions and archive) and picks a **theme** independently from installed packs; guest picks a **scene**, system captures faces, generates a cartoon **deliverable**, and guest receives it via **QR code**. Operator can **download all generated images** per event after the run.
 
 ---
 
@@ -145,9 +145,25 @@ stateDiagram-v2
 
 During `processing`, kiosk polls (or SSE — TBD) until phase changes.
 
+**Phase ownership:** `GET /booth` exposes a single `phase` field for the kiosk. It is **not** stored on `BoothConfig`. Idle (`attract`) means no current session; once the guest taps Começar, `Session.phase` drives the screen until the session ends. Implement via `resolveBoothPhase(currentSession)` in the API (`session?.phase ?? 'attract'`). Operator pause (V5) uses a `BoothConfig.paused` flag—not a duplicate phase column.
+
 ---
 
 ## 6. Data and retention
+
+### Entity model
+
+| Entity | Storage | Notes |
+|--------|---------|-------|
+| **Event** | SQLite | `id`, `name`, timestamps; operator-created; groups sessions and deliverables |
+| **BoothConfig** | SQLite | Operator config: `activeEventId`, `activeThemeId`, countdown settings; optional `paused` (V5). **No guest phase** |
+| **Session** | SQLite | Guest journey state (`phase`, `sceneId`, …); `eventId` FK at `POST /sessions/start` |
+| **Theme pack** | `api/themes/<themeId>/` on disk | **Global**, not under event folders; prompts server-only |
+| **Deliverable** | `api/data/events/{eventId}/deliverables/` | Final cartoon images per session |
+
+**Theme vs event:** Theme packs are installed assets shared across events. Selecting a theme updates booth config only—it does not create, own, or scope events.
+
+**Boot seed:** On first API start with an empty database, seed one default event and set it as `activeEventId` so dev and party pilot work without manual setup.
 
 | Store | Contents | Retention |
 |-------|----------|-----------|
@@ -172,9 +188,9 @@ During `processing`, kiosk polls (or SSE — TBD) until phase changes.
 
 ## 8. Theme packs
 
-Versioned on-disk packs under `api/themes/<themeId>/`: manifest, style preset, 3 scenes each with example image, display name (pt-BR), prompts (server-only), composition templates. Kiosk receives scene metadata via API only (names, example image URLs served by Nest).
+Versioned on-disk packs under `api/themes/<themeId>/`: manifest, style preset, 3 scenes each with example image, display name (pt-BR), prompts (server-only), composition templates. **Not stored per event**—the same packs are available regardless of which event is active. Kiosk receives scene metadata via API only (names, example image URLs served by Nest).
 
-Details → future [THEME_PACK_SPEC.md](./THEME_PACK_SPEC.md).
+Details → [THEME_PACK_SPEC.md](./THEME_PACK_SPEC.md).
 
 ---
 
@@ -184,15 +200,19 @@ All routes on `127.0.0.1` only for MVP. Exact DTOs defined during implementation
 
 **Booth / guest**
 
-- `GET /booth` — snapshot: phase, active theme, scenes for picker, config, current session fields
-- `POST /sessions/start`
+- `GET /booth` — snapshot: **phase** (derived from current session or `attract`), active **event** (id + name), active theme, scenes for picker, config, current session fields
+- `POST /sessions/start` — creates session under **active event**
 - `POST /sessions/current/scene`
 - `POST /sessions/current/capture` — body: face crops from kiosk
 - `GET /sessions/current` — poll during processing
 
 **Operator**
 
+- `GET /operator/events` — list events (id, name, timestamps, session count optional)
+- `POST /operator/events` `{ name }` — create event (does not auto-activate)
+- `POST /operator/events/:id/activate` — set active event (409 if guest session in progress; same guard as theme change)
 - `POST /operator/theme`, countdown config, pause, retake, skip
+- `GET /operator/themes` — list installed theme packs (no prompts)
 - `GET /operator/events/:eventId/sessions` — list for downloads UI
 - `GET /operator/events/:eventId/sessions/:id/download`
 - `GET /operator/events/:eventId/export.zip`
@@ -207,6 +227,7 @@ All routes on `127.0.0.1` only for MVP. Exact DTOs defined during implementation
 | §8 LAN-served QR links | Public HTTPS via R2 presigned URLs |
 | §9 ephemeral-only by default | Operator opt-in retention: deliverables kept until event deleted |
 | §8 WhatsApp delivery later | Operator download section only; no messaging integration |
+| Boot default event | Auto-seed one event + set active when DB empty (product §5 Event) |
 
 ---
 
@@ -234,7 +255,7 @@ Mapped from product §11: ~30–45s processing perceived wait, retry once on gen
 |----------|---------|
 | [PROJECT_DEFINITION.md](./PROJECT_DEFINITION.md) | Product scope and locked MVP decisions |
 | [MVP_EPIC_ROADMAP.md](./MVP_EPIC_ROADMAP.md) | Vertical implementation epics (V0–V8) for task breakdown |
-| THEME_PACK_SPEC.md | Theme/scene authoring (planned) |
+| THEME_PACK_SPEC.md | Theme/scene authoring |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
 ---
@@ -245,3 +266,4 @@ Mapped from product §11: ~30–45s processing perceived wait, retry once on gen
 |------|--------|
 | 2026-05-28 | Initial MVP architecture (high level) |
 | 2026-05-28 | Locked folder boundary: `api/` vs `kiosk/`; only `scripts/` and `docs/` shared |
+| 2026-05-29 | Operator event model: entity table, list/create/activate API, theme independence |
