@@ -106,27 +106,6 @@ export function CaptureReadyScreen({
   }, [detect, expectedFaceCount, onSubmitCapture]);
 
   useEffect(() => {
-    if (
-      uiMode !== 'capturing' ||
-      captureStep !== 'preview' ||
-      !stream ||
-      countdown !== null ||
-      retryMessage !== null
-    ) {
-      return;
-    }
-
-    setCountdown(captureCountdownSeconds);
-  }, [
-    captureCountdownSeconds,
-    captureStep,
-    countdown,
-    retryMessage,
-    stream,
-    uiMode,
-  ]);
-
-  useEffect(() => {
     if (countdown === null) {
       return;
     }
@@ -154,7 +133,11 @@ export function CaptureReadyScreen({
 
   const acceptConsent = () => {
     setCaptureStep('preview');
-    void start();
+    void start().then((mediaStream) => {
+      if (mediaStream) {
+        setCountdown(captureCountdownSeconds);
+      }
+    });
   };
 
   const exitCapture = () => {

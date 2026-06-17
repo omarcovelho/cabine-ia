@@ -8,7 +8,12 @@ import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
 
 @Module({
-  imports: [DatabaseModule, CaptureModule, forwardRef(() => BoothModule), ThemesModule],
+  imports: [
+    DatabaseModule,
+    CaptureModule,
+    forwardRef(() => BoothModule),
+    ThemesModule,
+  ],
   controllers: [SessionsController],
   providers: [SessionFsmService, SessionsService],
   exports: [SessionsService],

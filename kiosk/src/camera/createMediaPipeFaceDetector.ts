@@ -18,7 +18,7 @@ export async function createMediaPipeFaceDetector(): Promise<FaceDetector> {
             runningMode: 'IMAGE',
           }),
         ).then((faceDetector) => ({
-          detect: async (source: CanvasImageSource, _width: number, _height: number) => {
+          detect: async (source: CanvasImageSource) => {
             const result = faceDetector.detect(source as HTMLCanvasElement);
             return {
               faces: result.detections.slice(0, 4).map((detection) => {

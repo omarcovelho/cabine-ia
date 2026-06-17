@@ -22,12 +22,8 @@ describe('CaptureStorageService', () => {
       { buffer: Buffer.from('crop-b') },
     ]);
 
-    const crop1 = await readFile(
-      join(tmpRoot, 'session-1', 'crop-1.jpg'),
-    );
-    const crop2 = await readFile(
-      join(tmpRoot, 'session-1', 'crop-2.jpg'),
-    );
+    const crop1 = await readFile(join(tmpRoot, 'session-1', 'crop-1.jpg'));
+    const crop2 = await readFile(join(tmpRoot, 'session-1', 'crop-2.jpg'));
 
     expect(crop1.toString()).toBe('crop-a');
     expect(crop2.toString()).toBe('crop-b');

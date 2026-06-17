@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -9,9 +8,11 @@ import { CaptureStorageService } from '../capture/capture-storage.service';
 import { BoothConfigService } from '../booth/booth-config.service';
 import { PrismaService } from '../database/prisma.service';
 import { ThemeService } from '../themes/theme.service';
-import { assertValidCropCount } from './dto/submit-capture.dto';
+import {
+  assertValidCropCount,
+  parseUploadedCropFiles,
+} from './dto/submit-capture.dto';
 import { InvalidSessionTransitionError } from './session-fsm.errors';
-import type { UploadedCropFile } from './uploaded-crop.types';
 import { SessionFsmService } from './session-fsm.service';
 import {
   isOpenSessionPhase,
@@ -99,9 +100,7 @@ export class SessionsService {
     return toSessionDto(updated);
   }
 
-  async submitCapture(
-    files: UploadedCropFile[] | undefined,
-  ): Promise<SessionDto> {
+  async submitCapture(files: unknown): Promise<SessionDto> {
     const session = await this.requireOpenSession();
     try {
       this.sessionFsm.assertCanSubmitCapture(session.phase);
@@ -112,7 +111,7 @@ export class SessionsService {
       throw error;
     }
 
-    const crops = files ?? [];
+    const crops = parseUploadedCropFiles(files);
     assertValidCropCount(crops.length);
 
     await this.captureStorage.saveCrops(

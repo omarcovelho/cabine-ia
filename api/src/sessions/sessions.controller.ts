@@ -9,7 +9,6 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { SelectSceneDto } from './dto/select-scene.dto';
 import { SessionsService } from './sessions.service';
-import type { UploadedCropFile } from './uploaded-crop.types';
 
 @Controller('sessions')
 export class SessionsController {
@@ -38,7 +37,7 @@ export class SessionsController {
   @Post('current/capture')
   @HttpCode(200)
   @UseInterceptors(FilesInterceptor('crops', 4))
-  submitCapture(@UploadedFiles() files: UploadedCropFile[]) {
+  submitCapture(@UploadedFiles() files: unknown) {
     return this.sessionsService
       .submitCapture(files)
       .then((session) => ({ session }));

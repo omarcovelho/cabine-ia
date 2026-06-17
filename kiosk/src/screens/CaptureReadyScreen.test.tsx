@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FaceDetector } from '../camera/useFaceDetection';
 import { CaptureReadyScreen } from './CaptureReadyScreen';
 
-const mockStart = vi.fn().mockResolvedValue(undefined);
-const mockStop = vi.fn();
 const mockStream = {
   getTracks: () => [{ stop: vi.fn() }],
 } as unknown as MediaStream;
+const mockStart = vi.fn().mockResolvedValue(mockStream);
+const mockStop = vi.fn();
 
 vi.mock('../camera/useCamera', () => ({
   useCamera: () => ({

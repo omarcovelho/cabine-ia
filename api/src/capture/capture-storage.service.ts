@@ -14,19 +14,13 @@ export class CaptureStorageService {
     return join(this.tmpRoot, sessionId);
   }
 
-  async saveCrops(
-    sessionId: string,
-    crops: CropFilePayload[],
-  ): Promise<void> {
+  async saveCrops(sessionId: string, crops: CropFilePayload[]): Promise<void> {
     const sessionDir = this.getSessionDir(sessionId);
     await mkdir(sessionDir, { recursive: true });
 
     await Promise.all(
       crops.map((crop, index) =>
-        writeFile(
-          join(sessionDir, `crop-${index + 1}.jpg`),
-          crop.buffer,
-        ),
+        writeFile(join(sessionDir, `crop-${index + 1}.jpg`), crop.buffer),
       ),
     );
   }

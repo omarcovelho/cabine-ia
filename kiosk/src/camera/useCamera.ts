@@ -11,7 +11,7 @@ export function useCamera() {
     setStream(null);
   }, []);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (): Promise<MediaStream | null> => {
     stop();
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -21,11 +21,13 @@ export function useCamera() {
       streamRef.current = mediaStream;
       setStream(mediaStream);
       setError(null);
+      return mediaStream;
     } catch (caught) {
       const nextError =
         caught instanceof Error ? caught : new Error(String(caught));
       setError(nextError);
       setStream(null);
+      return null;
     }
   }, [stop]);
 
