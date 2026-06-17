@@ -26,7 +26,10 @@ type BoothResponseBody = {
   event: { id: string; name: string };
   theme: { id: string; name: string };
   scenes: Array<{ id: string; exampleUrl: string; name?: string }>;
-  config: Record<string, never>;
+  config: {
+    captureCountdownSeconds: number;
+    expectedFaceCount: number;
+  };
   session: {
     id: string;
     sceneId: string | null;
@@ -108,7 +111,7 @@ describe('Cabine API (e2e)', () => {
       phase: 'attract',
       theme: { id: 'stub-a', name: 'Festa Cartoon' },
       scenes: [],
-      config: {},
+      config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
       session: null,
     });
     expect(body.event).toMatchObject({ name: 'Default Event' });

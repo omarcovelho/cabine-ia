@@ -51,7 +51,10 @@ export class BoothService {
       event: { id: eventRecord.id, name: eventRecord.name },
       theme,
       scenes,
-      config: {},
+      config: {
+        captureCountdownSeconds: boothConfig.captureCountdownSeconds,
+        expectedFaceCount: boothConfig.expectedFaceCount,
+      },
       session,
     };
   }

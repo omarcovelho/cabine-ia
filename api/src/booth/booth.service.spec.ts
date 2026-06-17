@@ -42,6 +42,8 @@ describe('BoothService', () => {
 
     boothConfigService.getBoothConfig.mockResolvedValue({
       activeThemeId: 'stub-a',
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
       activeEvent: { id: 'event-1', name: 'Default Event' },
     });
     themeService.loadPack.mockReturnValue({
@@ -74,6 +76,10 @@ describe('BoothService', () => {
     expect(snapshot.event).toEqual({ id: 'event-1', name: 'Default Event' });
     expect(snapshot.theme).toEqual({ id: 'stub-a', name: 'Festa Cartoon' });
     expect(snapshot.scenes).toEqual([]);
+    expect(snapshot.config).toEqual({
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
+    });
     expect(snapshot.session).toBeNull();
   });
 
