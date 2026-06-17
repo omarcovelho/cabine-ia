@@ -1,6 +1,6 @@
 # V2 — Capture slice
 
-**Status:** Planned  
+**Status:** Complete  
 **Branch:** `feature/v2-capture`  
 **Last updated:** 2026-06-16
 
@@ -171,11 +171,11 @@ Each task: **Red → Green → Refactor**. Update status as work completes.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V2-20 | `SessionFsmService`: `assertCanSubmitCapture`, `nextPhaseAfterCapture` → `processing` | Unit: capture_ready only; rejects other phases | pending |
-| V2-21 | Extend `SESSION_PHASES`, `OPEN_SESSION_PHASES`, `BoothPhase`, kiosk `booth.ts` with `processing` | Typecheck + unit | pending |
-| V2-22 | `CaptureStorageService`: write crops to `api/data/tmp/{sessionId}/` | Unit: files on disk; correct paths | pending |
-| V2-23 | `POST /sessions/current/capture` (multipart) in controller + service | Integration: phase `processing` + files saved | pending |
-| V2-24 | Reject invalid capture: 400 (0 or >4 crops), 409 (wrong phase) | Integration | pending |
+| V2-20 | `SessionFsmService`: `assertCanSubmitCapture`, `nextPhaseAfterCapture` → `processing` | Unit: capture_ready only; rejects other phases | done |
+| V2-21 | Extend `SESSION_PHASES`, `OPEN_SESSION_PHASES`, `BoothPhase`, kiosk `booth.ts` with `processing` | Typecheck + unit | done |
+| V2-22 | `CaptureStorageService`: write crops to `api/data/tmp/{sessionId}/` | Unit: files on disk; correct paths | done |
+| V2-23 | `POST /sessions/current/capture` (multipart) in controller + service | Integration: phase `processing` + files saved | done |
+| V2-24 | Reject invalid capture: 400 (0 or >4 crops), 409 (wrong phase) | Integration | done |
 
 #### Phase C — Implementation notes
 
@@ -202,25 +202,25 @@ V1 transitions (`start`, `selectScene`, `back`) unchanged.
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V2-30 | `GET /booth` snapshot for `processing` phase | Integration: session + sceneName + config | pending |
-| V2-31 | E2E chain: scene pick → capture (multipart fixture) → `processing` | supertest chain | pending |
+| V2-30 | `GET /booth` snapshot for `processing` phase | Integration: session + sceneName + config | done |
+| V2-31 | E2E chain: scene pick → capture (multipart fixture) → `processing` | supertest chain | done |
 
 ### Phase E — Kiosk camera + face detection
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V2-40 | Add `@mediapipe/tasks-vision` to kiosk `package.json` | Install + typecheck | pending |
-| V2-41 | `useCamera` hook (`getUserMedia`) | Vitest: mock media stream | pending |
-| V2-42 | `useFaceDetection` + `extractFaceCrops` | Vitest: mock detector; 1–4 crop output | pending |
+| V2-40 | Add `@mediapipe/tasks-vision` to kiosk `package.json` | Install + typecheck | done |
+| V2-41 | `useCamera` hook (`getUserMedia`) | Vitest: mock media stream | done |
+| V2-42 | `useFaceDetection` + `extractFaceCrops` | Vitest: mock detector; 1–4 crop output | done |
 
 ### Phase F — Kiosk guest flow
 
 | ID | Task | TDD focus | Status |
 |----|------|-----------|--------|
-| V2-50 | Extend `booth.ts` types + `sessionClient.submitCapture()` (FormData) | Vitest mocks | pending |
-| V2-51 | `CaptureReadyScreen`: enable Tirar foto; inline capture mode (consent → preview → countdown → detect → upload or PT retry) | RTL: flow + retry copy | pending |
-| V2-52 | `ProcessingScreen`: “Criando seu retrato…” | RTL: renders message | pending |
-| V2-53 | `PhaseRouter`: `processing` case; wire handlers in `App.tsx` | Vitest routing | pending |
+| V2-50 | Extend `booth.ts` types + `sessionClient.submitCapture()` (FormData) | Vitest mocks | done |
+| V2-51 | `CaptureReadyScreen`: enable Tirar foto; inline capture mode (consent → preview → countdown → detect → upload or PT retry) | RTL: flow + retry copy | done |
+| V2-52 | `ProcessingScreen`: “Criando seu retrato…” | RTL: renders message | done |
+| V2-53 | `PhaseRouter`: `processing` case; wire handlers in `App.tsx` | Vitest routing | done |
 
 #### Phase F — Implementation notes
 
@@ -233,8 +233,8 @@ V1 transitions (`start`, `selectScene`, `back`) unchanged.
 
 | ID | Task | Status |
 |----|------|--------|
-| V2-80 | Manual demo script (see below) | pending |
-| V2-81 | Epic DoD checklist complete | pending |
+| V2-80 | Manual demo script (see below) | done |
+| V2-81 | Epic DoD checklist complete | done |
 
 ---
 
@@ -271,14 +271,14 @@ No new env vars for V2. Existing V1 vars unchanged (`OPERATOR_PIN`, `JWT_SECRET`
 
 ## Definition of Done
 
-- [ ] Failing test first for each behavior task; full suite passes
-- [ ] Demoable: webcam capture path via `npm run dev` through processing screen
-- [ ] Traces to product §6 step 4, §9 consent, §10 face detection, §16 max faces + countdown
-- [ ] API owns phase FSM; kiosk has capture UI sub-mode only (no client FSM for booth phases)
-- [ ] No guest raw photo in API responses; tmp paths server-only
-- [ ] No api↔kiosk cross-imports; face detection lib in kiosk only
-- [ ] PT copy on consent, retry, and processing screens
-- [ ] Deviation from architecture `capturing` server phase documented (this spec)
+- [x] Failing test first for each behavior task; full suite passes
+- [x] Demoable: webcam capture path via `npm run dev` through processing screen
+- [x] Traces to product §6 step 4, §9 consent, §10 face detection, §16 max faces + countdown
+- [x] API owns phase FSM; kiosk has capture UI sub-mode only (no client FSM for booth phases)
+- [x] No guest raw photo in API responses; tmp paths server-only
+- [x] No api↔kiosk cross-imports; face detection lib in kiosk only
+- [x] PT copy on consent, retry, and processing screens
+- [x] Deviation from architecture `capturing` server phase documented (this spec)
 
 ---
 
@@ -288,3 +288,4 @@ No new env vars for V2. Existing V1 vars unchanged (`OPERATOR_PIN`, `JWT_SECRET`
 |------|--------|
 | 2026-06-16 | Initial V2 epic spec |
 | 2026-06-16 | Configurable expected face count (1–4) on booth config |
+| 2026-06-17 | Phases A–G complete: capture route, tmp storage, kiosk camera flow, processing screen |

@@ -1,10 +1,15 @@
-export const SESSION_PHASES = ['scene_pick', 'capture_ready'] as const;
+export const SESSION_PHASES = [
+  'scene_pick',
+  'capture_ready',
+  'processing',
+] as const;
 
 export type SessionPhase = (typeof SESSION_PHASES)[number];
 
 export const OPEN_SESSION_PHASES: readonly SessionPhase[] = [
   'scene_pick',
   'capture_ready',
+  'processing',
 ];
 
 export interface SessionDto {

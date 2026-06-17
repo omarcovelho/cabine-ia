@@ -1,13 +1,17 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Session } from '@prisma/client';
+import { CaptureStorageService } from '../capture/capture-storage.service';
 import { BoothConfigService } from '../booth/booth-config.service';
 import { PrismaService } from '../database/prisma.service';
 import { ThemeService } from '../themes/theme.service';
+import { assertValidCropCount } from './dto/submit-capture.dto';
 import { InvalidSessionTransitionError } from './session-fsm.errors';
+import type { UploadedCropFile } from './uploaded-crop.types';
 import { SessionFsmService } from './session-fsm.service';
 import {
   isOpenSessionPhase,
@@ -23,6 +27,7 @@ export class SessionsService {
     private readonly boothConfigService: BoothConfigService,
     private readonly sessionFsm: SessionFsmService,
     private readonly themeService: ThemeService,
+    private readonly captureStorage: CaptureStorageService,
   ) {}
 
   async start(): Promise<SessionDto> {
@@ -89,6 +94,35 @@ export class SessionsService {
         phase: this.sessionFsm.nextPhaseAfterBack(),
         sceneId: null,
       },
+    });
+
+    return toSessionDto(updated);
+  }
+
+  async submitCapture(
+    files: UploadedCropFile[] | undefined,
+  ): Promise<SessionDto> {
+    const session = await this.requireOpenSession();
+    try {
+      this.sessionFsm.assertCanSubmitCapture(session.phase);
+    } catch (error) {
+      if (error instanceof InvalidSessionTransitionError) {
+        throw new ConflictException(error.message);
+      }
+      throw error;
+    }
+
+    const crops = files ?? [];
+    assertValidCropCount(crops.length);
+
+    await this.captureStorage.saveCrops(
+      session.id,
+      crops.map((file) => ({ buffer: file.buffer })),
+    );
+
+    const updated = await this.prisma.session.update({
+      where: { id: session.id },
+      data: { phase: this.sessionFsm.nextPhaseAfterCapture() },
     });
 
     return toSessionDto(updated);

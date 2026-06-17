@@ -1,6 +1,15 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { SelectSceneDto } from './dto/select-scene.dto';
 import { SessionsService } from './sessions.service';
+import type { UploadedCropFile } from './uploaded-crop.types';
 
 @Controller('sessions')
 export class SessionsController {
@@ -24,5 +33,14 @@ export class SessionsController {
   @HttpCode(200)
   goBack() {
     return this.sessionsService.goBack().then((session) => ({ session }));
+  }
+
+  @Post('current/capture')
+  @HttpCode(200)
+  @UseInterceptors(FilesInterceptor('crops', 4))
+  submitCapture(@UploadedFiles() files: UploadedCropFile[]) {
+    return this.sessionsService
+      .submitCapture(files)
+      .then((session) => ({ session }));
   }
 }

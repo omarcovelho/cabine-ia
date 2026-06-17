@@ -127,4 +127,31 @@ describe('BoothService', () => {
       sceneName: 'Praia',
     });
   });
+
+  it('returns processing snapshot with sceneName and config', async () => {
+    sessionsService.getOpenSession.mockResolvedValue({
+      id: 'session-1',
+      eventId: 'event-1',
+      sceneId: 'beach',
+      phase: 'processing',
+    });
+    prisma.event.findUniqueOrThrow.mockResolvedValue({
+      id: 'event-1',
+      name: 'Default Event',
+    });
+
+    const snapshot = await service.getSnapshot();
+
+    expect(snapshot.phase).toBe('processing');
+    expect(snapshot.scenes).toHaveLength(1);
+    expect(snapshot.config).toEqual({
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
+    });
+    expect(snapshot.session).toEqual({
+      id: 'session-1',
+      sceneId: 'beach',
+      sceneName: 'Praia',
+    });
+  });
 });

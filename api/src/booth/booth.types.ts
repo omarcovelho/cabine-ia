@@ -1,6 +1,10 @@
 import type { GuestScene } from '../themes/theme.types';
 
-export type BoothPhase = 'attract' | 'scene_pick' | 'capture_ready';
+export type BoothPhase =
+  | 'attract'
+  | 'scene_pick'
+  | 'capture_ready'
+  | 'processing';
 
 export interface BoothEventSummary {
   id: string;

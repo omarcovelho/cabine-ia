@@ -9,7 +9,7 @@ const mockSnapshot = {
   event: { id: 'event-1', name: 'Default Event' },
   theme: { id: 'stub-a', name: 'Festa Cartoon' },
   scenes: [],
-  config: {},
+  config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
   session: null,
 } satisfies BoothSnapshot;
 

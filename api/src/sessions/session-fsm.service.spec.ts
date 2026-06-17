@@ -40,6 +40,28 @@ describe('SessionFsmService', () => {
     });
   });
 
+  describe('submitCapture', () => {
+    it('allows submitCapture from capture_ready', () => {
+      expect(() => fsm.assertCanSubmitCapture('capture_ready')).not.toThrow();
+    });
+
+    it('rejects submitCapture from scene_pick', () => {
+      expect(() => fsm.assertCanSubmitCapture('scene_pick')).toThrow(
+        InvalidSessionTransitionError,
+      );
+    });
+
+    it('rejects submitCapture from processing', () => {
+      expect(() => fsm.assertCanSubmitCapture('processing')).toThrow(
+        InvalidSessionTransitionError,
+      );
+    });
+
+    it('returns processing as the phase after capture', () => {
+      expect(fsm.nextPhaseAfterCapture()).toBe('processing');
+    });
+  });
+
   describe('back', () => {
     it('allows back from capture_ready', () => {
       expect(() => fsm.assertCanGoBack('capture_ready')).not.toThrow();

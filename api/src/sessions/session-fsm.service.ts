@@ -28,6 +28,18 @@ export class SessionFsmService {
     return 'capture_ready';
   }
 
+  assertCanSubmitCapture(currentPhase: string): void {
+    if (currentPhase !== 'capture_ready') {
+      throw new InvalidSessionTransitionError(
+        'Capture can only be submitted during capture_ready',
+      );
+    }
+  }
+
+  nextPhaseAfterCapture(): SessionPhase {
+    return 'processing';
+  }
+
   assertCanGoBack(currentPhase: string): void {
     if (currentPhase !== 'capture_ready') {
       throw new InvalidSessionTransitionError(

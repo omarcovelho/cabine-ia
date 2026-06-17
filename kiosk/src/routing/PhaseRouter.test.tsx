@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   mockBoothSnapshot,
   mockCaptureReadySnapshot,
+  mockProcessingSnapshot,
   mockScenePickSnapshot,
 } from '../test/fixtures/boothSnapshots';
 import { PhaseRouter } from './PhaseRouter';
@@ -11,6 +12,7 @@ const baseProps = {
   onStartSession: vi.fn(),
   onSelectScene: vi.fn(),
   onBack: vi.fn(),
+  onSubmitCapture: vi.fn(),
   onOperatorEntry: vi.fn(),
 };
 
@@ -33,6 +35,11 @@ describe('PhaseRouter', () => {
     );
     expect(screen.getByText('Cena: Praia')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tirar foto' })).toBeInTheDocument();
+  });
+
+  it('renders ProcessingScreen when phase is processing', () => {
+    render(<PhaseRouter snapshot={mockProcessingSnapshot} {...baseProps} />);
+    expect(screen.getByText('Criando seu retrato…')).toBeInTheDocument();
   });
 
   it('renders nothing while snapshot is undefined', () => {

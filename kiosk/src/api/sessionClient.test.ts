@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { goBack, selectScene, startSession } from './sessionClient';
+import { goBack, selectScene, startSession, submitCapture } from './sessionClient';
 
 describe('sessionClient', () => {
   afterEach(() => {
@@ -73,5 +73,35 @@ describe('sessionClient', () => {
       method: 'POST',
     });
     expect(session.phase).toBe('scene_pick');
+  });
+
+  it('submitCapture posts multipart crops without Content-Type header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          session: {
+            id: 's1',
+            phase: 'processing',
+            sceneId: 'beach',
+            eventId: 'e1',
+          },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const crops = [
+      new Blob(['crop-a'], { type: 'image/jpeg' }),
+      new Blob(['crop-b'], { type: 'image/jpeg' }),
+    ];
+    const session = await submitCapture(crops);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/sessions/current/capture', {
+      method: 'POST',
+      body: expect.any(FormData),
+    });
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(requestInit.headers).toBeUndefined();
+    expect(session.phase).toBe('processing');
   });
 });

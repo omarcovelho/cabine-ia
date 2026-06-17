@@ -1,6 +1,7 @@
 import type { BoothSnapshot } from '../types/booth';
 import { AttractScreen } from '../screens/AttractScreen';
 import { CaptureReadyScreen } from '../screens/CaptureReadyScreen';
+import { ProcessingScreen } from '../screens/ProcessingScreen';
 import { ScenePickerScreen } from '../screens/ScenePickerScreen';
 
 type PhaseRouterProps = {
@@ -8,6 +9,7 @@ type PhaseRouterProps = {
   onStartSession: () => void;
   onSelectScene: (sceneId: string) => void;
   onBack: () => void;
+  onSubmitCapture: (crops: Blob[]) => void;
   onOperatorEntry: () => void;
   isGuestActionPending?: boolean;
 };
@@ -17,6 +19,7 @@ export function PhaseRouter({
   onStartSession,
   onSelectScene,
   onBack,
+  onSubmitCapture,
   onOperatorEntry,
   isGuestActionPending = false,
 }: PhaseRouterProps) {
@@ -45,10 +48,15 @@ export function PhaseRouter({
       return (
         <CaptureReadyScreen
           sceneName={snapshot.session?.sceneName ?? ''}
+          captureCountdownSeconds={snapshot.config.captureCountdownSeconds}
+          expectedFaceCount={snapshot.config.expectedFaceCount}
           onBack={onBack}
+          onSubmitCapture={onSubmitCapture}
           isBusy={isGuestActionPending}
         />
       );
+    case 'processing':
+      return <ProcessingScreen />;
     default:
       return null;
   }
