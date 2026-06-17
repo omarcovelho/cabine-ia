@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { goBack, selectScene, startSession } from './api/sessionClient';
+import { goBack, selectScene, startSession, submitCapture } from './api/sessionClient';
 import { useOperatorAuth } from './auth/useOperatorAuth';
 import { useBoothPolling } from './hooks/useBoothPolling';
 import { OperatorOverlay } from './operator/OperatorOverlay';
@@ -47,6 +47,9 @@ function App() {
         }}
         onBack={() => {
           void runGuestAction(goBack);
+        }}
+        onSubmitCapture={(crops) => {
+          void runGuestAction(() => submitCapture(crops));
         }}
       />
       <OperatorOverlay

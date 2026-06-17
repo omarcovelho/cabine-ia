@@ -34,7 +34,8 @@ export class BoothService {
     let session: BoothSnapshot['session'] = null;
     if (openSession) {
       const sceneName =
-        openSession.sceneId && phase === 'capture_ready'
+        openSession.sceneId &&
+        (phase === 'capture_ready' || phase === 'processing')
           ? (themePack.scenes.find((scene) => scene.id === openSession.sceneId)
               ?.name ?? null)
           : null;
@@ -51,7 +52,10 @@ export class BoothService {
       event: { id: eventRecord.id, name: eventRecord.name },
       theme,
       scenes,
-      config: {},
+      config: {
+        captureCountdownSeconds: boothConfig.captureCountdownSeconds,
+        expectedFaceCount: boothConfig.expectedFaceCount,
+      },
       session,
     };
   }

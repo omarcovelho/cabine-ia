@@ -1,11 +1,38 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { existsSync } from 'node:fs';
+import { readdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { configureApp } from '../src/app.config';
 import { AppModule } from '../src/app.module';
 import { BOOTH_CONFIG_ID } from '../src/booth/booth-config.constants';
 import { PrismaService } from '../src/database/prisma.service';
+
+const cropFixturePath = join(__dirname, 'fixtures', 'crop-fixture.jpg');
+
+async function goToCaptureReady(app: INestApplication<App>): Promise<void> {
+  await request(app.getHttpServer()).post('/sessions/start').expect(200);
+  await request(app.getHttpServer())
+    .post('/sessions/current/scene')
+    .send({ sceneId: 'beach' })
+    .expect(200);
+}
+
+async function submitCaptureFixture(
+  app: INestApplication<App>,
+  cropCount = 1,
+): Promise<SessionResponseBody> {
+  const req = request(app.getHttpServer()).post('/sessions/current/capture');
+  for (let index = 0; index < cropCount; index += 1) {
+    req.attach('crops', cropFixturePath, {
+      filename: `crop-${index + 1}.jpg`,
+    });
+  }
+  const res = await req.expect(200);
+  return res.body as SessionResponseBody;
+}
 
 type LoginResponseBody = {
   token: string;
@@ -26,7 +53,10 @@ type BoothResponseBody = {
   event: { id: string; name: string };
   theme: { id: string; name: string };
   scenes: Array<{ id: string; exampleUrl: string; name?: string }>;
-  config: Record<string, never>;
+  config: {
+    captureCountdownSeconds: number;
+    expectedFaceCount: number;
+  };
   session: {
     id: string;
     sceneId: string | null;
@@ -86,6 +116,10 @@ describe('Cabine API (e2e)', () => {
   });
 
   afterEach(async () => {
+    const tmpRoot = join(process.cwd(), 'data', 'tmp');
+    if (existsSync(tmpRoot)) {
+      await rm(tmpRoot, { recursive: true, force: true });
+    }
     await app.close();
   });
 
@@ -108,7 +142,7 @@ describe('Cabine API (e2e)', () => {
       phase: 'attract',
       theme: { id: 'stub-a', name: 'Festa Cartoon' },
       scenes: [],
-      config: {},
+      config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
       session: null,
     });
     expect(body.event).toMatchObject({ name: 'Default Event' });
@@ -472,5 +506,85 @@ describe('Cabine API (e2e)', () => {
       sceneId: 'castle',
       sceneName: 'Castelo',
     });
+  });
+
+  it('POST /sessions/current/capture moves to processing and saves crops', async () => {
+    await goToCaptureReady(app);
+
+    const body = await submitCaptureFixture(app, 2);
+
+    expect(body.session.phase).toBe('processing');
+    expect(body.session.sceneId).toBe('beach');
+
+    const sessionDir = join(process.cwd(), 'data', 'tmp', body.session.id);
+    const files = await readdir(sessionDir);
+    expect(files).toEqual(['crop-1.jpg', 'crop-2.jpg']);
+  });
+
+  it('POST /sessions/current/capture returns 400 for zero crops', async () => {
+    await goToCaptureReady(app);
+
+    return request(app.getHttpServer())
+      .post('/sessions/current/capture')
+      .expect(400);
+  });
+
+  it('POST /sessions/current/capture returns 400 for more than four crops', async () => {
+    await goToCaptureReady(app);
+
+    const req = request(app.getHttpServer()).post('/sessions/current/capture');
+    for (let index = 0; index < 5; index += 1) {
+      req.attach('crops', cropFixturePath, {
+        filename: `crop-${index + 1}.jpg`,
+      });
+    }
+
+    return req.expect(400);
+  });
+
+  it('POST /sessions/current/capture returns 409 from scene_pick', async () => {
+    await request(app.getHttpServer()).post('/sessions/start').expect(200);
+
+    const req = request(app.getHttpServer()).post('/sessions/current/capture');
+    req.attach('crops', cropFixturePath, { filename: 'crop-1.jpg' });
+
+    return req.expect(409);
+  });
+
+  it('POST /sessions/current/capture returns 404 when no session exists', () => {
+    const req = request(app.getHttpServer()).post('/sessions/current/capture');
+    req.attach('crops', cropFixturePath, { filename: 'crop-1.jpg' });
+
+    return req.expect(404);
+  });
+
+  it('guest flow chain: scene pick → capture → processing booth snapshot', async () => {
+    await goToCaptureReady(app);
+
+    const captureBody = await submitCaptureFixture(app);
+    expect(captureBody.session.phase).toBe('processing');
+
+    const booth = await request(app.getHttpServer()).get('/booth').expect(200);
+    const boothBody = booth.body as BoothResponseBody;
+
+    expect(boothBody.phase).toBe('processing');
+    expect(boothBody.session).toMatchObject({
+      id: captureBody.session.id,
+      sceneId: 'beach',
+      sceneName: 'Praia',
+    });
+    expect(boothBody.config).toEqual({
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
+    });
+
+    const sessionDir = join(
+      process.cwd(),
+      'data',
+      'tmp',
+      captureBody.session.id,
+    );
+    const files = await readdir(sessionDir);
+    expect(files).toEqual(['crop-1.jpg']);
   });
 });

@@ -121,7 +121,9 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V2 — Capture slice: countdown, faces, handoff to processing
 
-**User outcome:** Guest taps **“Tirar foto”** → consent line → **capture countdown** → single shot → system accepts **1–4 face crops** or shows **PT retry**; on success, booth enters **processing** (generation can still be stubbed).
+**Detailed spec:** [docs/epics/V2_CAPTURE.md](./epics/V2_CAPTURE.md) · **Branch:** `feature/v2-capture`
+
+**User outcome:** Guest taps **“Tirar foto”** → consent line → **capture countdown** → single shot → system accepts face crops matching the **operator-configured expected face count** (1–4) or shows **PT retry**; on success, booth enters **processing** (generation can still be stubbed).
 
 **Purpose:** Completes the **camera half** of the guest journey—webcam, face detection, ephemeral crops on the server, and phase handoff to generation—without requiring AI or QR yet.
 
@@ -129,15 +131,17 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 | Layer | Scope |
 |-------|--------|
-| **api/** | `POST /sessions/current/capture` (crops + metadata); `api/data/tmp/` for ephemeral files; phase `capture_ready` → `capturing` → `processing`; reject invalid transitions |
-| **kiosk/** | Live preview, framing guide, face detection (**kiosk-only** lib), crop upload, PT errors for 0/mismatch faces |
-| **config** | Capture countdown duration on booth config (default OK until V5) |
+| **api/** | `POST /sessions/current/capture` (crops + metadata); `api/data/tmp/` for ephemeral files; phase `capture_ready` → `processing`; reject invalid transitions |
+| **kiosk/** | Live preview, framing guide, face detection (**kiosk-only** lib), crop upload, PT errors when detected count ≠ expected or is 0 |
+| **config** | **Expected face count** (1–4) and capture countdown duration on booth config; defaults OK until V5 operator UI |
 
-**Demo:** Real webcam capture with 1–4 faces → API has tmp crops → UI shows “Criando seu retrato…” (processing).
+**Demo:** Operator sets expected faces (e.g. 2) → guest capture with matching face count → API has tmp crops → UI shows “Criando seu retrato…” (processing).
 
 **Maps to:** §6 step 4, §9 consent, §10 face detection, §16 max faces + capture countdown.
 
 **Depends on:** V1.
+
+**Notes:** MVP supports 1–4 faces per capture; operator picks the **expected count** for the current run (solo guest vs group). Config UI ships in V5 alongside countdown settings; V2 persists defaults and exposes values in `GET /booth.config`.
 
 **Not in V2:** AI generation (V3), QR/R2 (V4), operator pause/retake/skip (V5).
 
@@ -187,18 +191,18 @@ Cross-cutting concerns (logging, OpenAPI types, secrets) are **tasks inside each
 
 ## V5 — Operator live control slice: run the event safely
 
-**User outcome:** During the party, operator can **pause/resume**, **retake** (no prior guest QR leaked), **skip** stuck generation, and set **capture + post-finish countdown** durations.
+**User outcome:** During the party, operator can **pause/resume**, **retake** (no prior guest QR leaked), **skip** stuck generation, and set **expected face count** (1–4), **capture countdown**, and **post-finish countdown** durations.
 
 **Vertical deliverables:**
 
 | Layer | Scope |
 |-------|--------|
-| **api/** | `POST /operator/...` pause, retake, skip, countdown config; booth snapshot reflects pause + guest-friendly error message |
+| **api/** | `POST /operator/...` pause, retake, skip, face-count + countdown config; booth snapshot reflects pause + guest-friendly error message |
 | **kiosk/** | Operator panel (gesture/password TBD) wired to above; optional session counter |
 
 **Demo:** Pause mid-attract; skip a hung `processing`; retake after reveal without showing old QR.
 
-**Maps to:** §7 during event, §10 operator recovery; §16 both countdowns (config UI).
+**Maps to:** §7 during event, §10 operator recovery; §16 max faces + both countdowns (config UI).
 
 **Depends on:** V4 (full flow to interrupt).
 
@@ -321,6 +325,7 @@ Use the same checklist every time:
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture and API sketch |
 | [epics/V0_PLATFORM.md](./epics/V0_PLATFORM.md) | V0 task-level implementation spec |
 | [epics/V1_SCENE_PICK.md](./epics/V1_SCENE_PICK.md) | V1 task-level implementation spec |
+| [epics/V2_CAPTURE.md](./epics/V2_CAPTURE.md) | V2 task-level implementation spec |
 | THEME_PACK_SPEC.md | Theme/scene authoring |
 | OPERATOR_RUNBOOK.md | Setup, network, lighting, troubleshooting (planned) |
 
@@ -334,3 +339,4 @@ Use the same checklist every time:
 | 2026-05-29 | V0 detailed spec linked; task index added |
 | 2026-05-29 | V1 detailed spec linked; auth + task index added |
 | 2026-05-29 | Operator event management in V1 scope; V6 archive builds on V1 events |
+| 2026-06-16 | V2 detailed spec linked; configurable expected face count (1–4) on booth config |

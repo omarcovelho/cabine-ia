@@ -3,7 +3,7 @@ export const mockBoothSnapshot = {
   event: { id: 'event-1', name: 'Default Event' },
   theme: { id: 'stub-a', name: 'Festa Cartoon' },
   scenes: [],
-  config: {},
+  config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
   session: null,
 };
 
@@ -31,7 +31,7 @@ export const mockScenePickSnapshot = {
       exampleUrl: '/themes/stub-a/scenes/forest/example',
     },
   ],
-  config: {},
+  config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
   session: { id: 'session-1', sceneId: null, sceneName: null },
 };
 
@@ -40,6 +40,15 @@ export const mockCaptureReadySnapshot = {
   event: { id: 'event-1', name: 'Default Event' },
   theme: { id: 'stub-a', name: 'Festa Cartoon' },
   scenes: mockScenePickSnapshot.scenes,
-  config: {},
+  config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
+  session: { id: 'session-1', sceneId: 'beach', sceneName: 'Praia' },
+};
+
+export const mockProcessingSnapshot = {
+  phase: 'processing' as const,
+  event: { id: 'event-1', name: 'Default Event' },
+  theme: { id: 'stub-a', name: 'Festa Cartoon' },
+  scenes: mockScenePickSnapshot.scenes,
+  config: { captureCountdownSeconds: 3, expectedFaceCount: 1 },
   session: { id: 'session-1', sceneId: 'beach', sceneName: 'Praia' },
 };

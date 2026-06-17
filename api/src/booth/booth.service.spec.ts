@@ -42,6 +42,8 @@ describe('BoothService', () => {
 
     boothConfigService.getBoothConfig.mockResolvedValue({
       activeThemeId: 'stub-a',
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
       activeEvent: { id: 'event-1', name: 'Default Event' },
     });
     themeService.loadPack.mockReturnValue({
@@ -74,6 +76,10 @@ describe('BoothService', () => {
     expect(snapshot.event).toEqual({ id: 'event-1', name: 'Default Event' });
     expect(snapshot.theme).toEqual({ id: 'stub-a', name: 'Festa Cartoon' });
     expect(snapshot.scenes).toEqual([]);
+    expect(snapshot.config).toEqual({
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
+    });
     expect(snapshot.session).toBeNull();
   });
 
@@ -115,6 +121,33 @@ describe('BoothService', () => {
     const snapshot = await service.getSnapshot();
 
     expect(snapshot.phase).toBe('capture_ready');
+    expect(snapshot.session).toEqual({
+      id: 'session-1',
+      sceneId: 'beach',
+      sceneName: 'Praia',
+    });
+  });
+
+  it('returns processing snapshot with sceneName and config', async () => {
+    sessionsService.getOpenSession.mockResolvedValue({
+      id: 'session-1',
+      eventId: 'event-1',
+      sceneId: 'beach',
+      phase: 'processing',
+    });
+    prisma.event.findUniqueOrThrow.mockResolvedValue({
+      id: 'event-1',
+      name: 'Default Event',
+    });
+
+    const snapshot = await service.getSnapshot();
+
+    expect(snapshot.phase).toBe('processing');
+    expect(snapshot.scenes).toHaveLength(1);
+    expect(snapshot.config).toEqual({
+      captureCountdownSeconds: 3,
+      expectedFaceCount: 1,
+    });
     expect(snapshot.session).toEqual({
       id: 'session-1',
       sceneId: 'beach',

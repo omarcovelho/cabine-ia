@@ -37,6 +37,8 @@ describe('BootSeedService', () => {
     expect(boothConfig?.activeThemeId).toBe('stub-a');
     expect(boothConfig?.activeEvent.name).toBe('Default Event');
     expect(boothConfig?.activeEventId).toBe(boothConfig?.activeEvent.id);
+    expect(boothConfig?.captureCountdownSeconds).toBe(3);
+    expect(boothConfig?.expectedFaceCount).toBe(1);
   });
 
   it('does not duplicate booth config when seed runs twice', async () => {

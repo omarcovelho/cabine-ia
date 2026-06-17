@@ -16,10 +16,12 @@ model Event {
 }
 
 model BoothConfig {
-  id            String @id @default("booth")
-  activeEventId String @unique
-  activeEvent   Event  @relation(fields: [activeEventId], references: [id], onDelete: Restrict)
-  activeThemeId String @default("stub-a")
+  id                      String @id @default("booth")
+  activeEventId           String @unique
+  activeEvent             Event  @relation(fields: [activeEventId], references: [id], onDelete: Restrict)
+  activeThemeId           String @default("stub-a")
+  captureCountdownSeconds Int    @default(3)
+  expectedFaceCount       Int    @default(1)
 }
 
 model Session {

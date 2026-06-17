@@ -1,6 +1,10 @@
 import type { GuestScene } from '../themes/theme.types';
 
-export type BoothPhase = 'attract' | 'scene_pick' | 'capture_ready';
+export type BoothPhase =
+  | 'attract'
+  | 'scene_pick'
+  | 'capture_ready'
+  | 'processing';
 
 export interface BoothEventSummary {
   id: string;
@@ -18,11 +22,16 @@ export interface BoothSessionSnapshot {
   sceneName: string | null;
 }
 
+export interface BoothConfigSnapshot {
+  captureCountdownSeconds: number;
+  expectedFaceCount: number;
+}
+
 export interface BoothSnapshot {
   phase: BoothPhase;
   event: BoothEventSummary;
   theme: BoothThemeSummary;
   scenes: GuestScene[];
-  config: Record<string, never>;
+  config: BoothConfigSnapshot;
   session: BoothSessionSnapshot | null;
 }

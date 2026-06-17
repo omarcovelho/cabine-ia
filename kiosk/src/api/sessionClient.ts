@@ -39,3 +39,20 @@ export async function goBack(): Promise<SessionDto> {
   const body = (await response.json()) as SessionResponse;
   return body.session;
 }
+
+export async function submitCapture(crops: Blob[]): Promise<SessionDto> {
+  const formData = new FormData();
+  crops.forEach((crop, index) => {
+    formData.append('crops', crop, `crop-${index + 1}.jpg`);
+  });
+
+  const response = await fetch('/api/sessions/current/capture', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to submit capture: ${response.status}`);
+  }
+  const body = (await response.json()) as SessionResponse;
+  return body.session;
+}
